@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PathFinder - 직무 리스트</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo"><a href="index.html">PathFinder</a></div>
+            <nav>
+                <ul>
+                    <li><a href="quiz.html">직무 추천</a></li>
+                    <li><a href="job-list.html" class="active">직무 리스트</a></li>
+                    <li><a href="roadmap.html">직무 로드맵</a></li>
+                </ul>
+            </nav>
+            <div class="auth"><a href="#">로그인 / 회원가입</a></div>
+        </header>
+
+        <main class="job-list-main">
+            <p class="sub-title">[ IT 직무 리스트 ]</p>
+            <nav class="field-nav">
+                <a href="#field-swe">소프트웨어·웹 개발 분야</a>
+                <a href="#field-ai-data">AI·데이터 분야</a>
+                <a href="#field-infra-ops">인프라·운영 분야</a>
+                <a href="#field-security">보안·네트워크 분야</a>
+                <a href="#field-hardware">하드웨어·로봇·IoT 분야</a>
+            </nav>
+
+            <div id="job-listing-container">
+                </div>
+        </main>
+    </div>
+    <script src="job-list.js"></script>
+</body>
+</html>

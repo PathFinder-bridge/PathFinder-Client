@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PathFinder - 직무 로드맵</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo"><a href="index.html">PathFinder</a></div>
+            <nav>
+                <ul>
+                    <li><a href="quiz.html">직무 추천</a></li>
+                    <li><a href="#">직무 리스트</a></li>
+                    <li><a href="#" class="active">직무 로드맵</a></li>
+                </ul>
+            </nav>
+            <div class="auth"><a href="#">로그인 / 회원가입</a></div>
+        header>
+
+        <main class="roadmap-main">
+            <aside id="job-sidebar">
+                </aside>
+
+            <section id="chat-container">
+                <div id="chat-window">
+                    <div class="message bot-message">
+                        <div class="bot-profile">
+                            <img src="images/bot-icon.png" alt="Path봇">
+                            <span>Path봇</span>
+                        </div>
+                        <div class="message-content">
+                            <p id="initial-greeting">user님이 가장 흥미를 느낀 직무는 <strong>데이터 과학자</strong>입니다.</p>
+                            <p><strong>데이터 과학자란</strong> 다양한 데이터를 분석하여 비즈니스 인사이트를 도출하고, 통계 및 머신러닝 기법을 활용하여 예측 모델을 만드는 직업입니다.</p>
+                            <p class="prompt">&lt;<strong>데이터 과학자</strong>을(를) 준비하는 로드맵을 안내해드릴까요?&gt;</p>
+                            <p class="example">궁금한 직무명을 입력하면 1년/6개월/3개월 로드맵을 안내해드릴게요!<br>예시: 3개월 AI 엔지니어</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="chat-input-area">
+                    <input type="text" id="chat-input" placeholder="무엇이든 물어보세요">
+                    <button id="send-button">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                    </button>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script src="roadmap.js"></script>
+</body>
+</html>
