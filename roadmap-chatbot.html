@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>로드맵 챗봇</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="chatbot-section" id="chatbot-section" style="display:block;">
+        <h2 class="roadmap-title">로드맵 챗봇</h2>
+        <div class="chatbot-messages" id="chatbot-messages"></div>
+        <div class="chatbot-input">
+            <input type="text" id="chatbot-input" placeholder="직무명을 입력하거나 궁금한 점을 물어보세요...">
+            <button id="chatbot-send">전송</button>
+        </div>
+    </div>
+    <script src="script.js"></script>
+    <script>
+    // 단독 챗봇 로드맵 페이지용 함수 자동 실행
+    window.addEventListener('DOMContentLoaded', function() {
+        if (typeof showRoadmapChatbotStandalone === 'function') {
+            showRoadmapChatbotStandalone();
+        }
+    });
+    </script>
+</body>
+</html> 

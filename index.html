@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PathFinder - AI 기반 직무 추천</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Add new styles for skill selection buttons */
+        .skill-selection-section {
+            display: none; /* Hidden by default */
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .skill-selection-section.active {
+            display: block; /* Shown when active */
+        }
+
+        .skill-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .skill-button {
+            padding: 0.8rem 1.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background-color: #f3f4f6;
+            color: #333;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap; /* Prevent wrapping for skill names */
+        }
+
+        .skill-button:hover {
+            background-color: #e5e7eb;
+            border-color: #9ca3af;
+        }
+
+        .skill-button.selected {
+            background-color: #2563eb;
+            color: white;
+            border-color: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(37, 99, 235, 0.2);
+        }
+
+        .skill-confirm-button {
+            padding: 0.8rem 2rem;
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .skill-confirm-button:hover {
+            background-color: #1d4ed8;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <nav class="container">
+            <div class="logo">PathFinder</div>
+            <ul class="nav-links">
+                <li><a href="#home">직무 추천</a></li>
+                <li><a href="#jobs">채용 공고 확인</a></li>
+                <li><a href="#roadmap" id="nav-roadmap">로드맵</a></li>
+                <li><a href="#list">직무 리스트</a></li>
+            </ul>
+            <div class="auth-buttons">
+                <a href="#login" class="btn btn-outline">로그인</a>
+                <a href="#signup" class="btn btn-primary">회원가입</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container">
+        <div class="quiz-section" id="quiz-section">
+            <div class="quiz-header">
+                <h1 class="quiz-title">직무 추천 테스트</h1>
+                <span class="quiz-count" id="quiz-count">(?)</span>
+            </div>
+
+            <div class="chat-container" id="chat-container">
+                </div>
+        </div>
+
+        <div class="skill-selection-section" id="skill-selection-section">
+            <h2 class="quiz-title" style="margin-bottom: 1.5rem;">2. 경험해보거나, 관심 있는 기술을 선택해주세요.</h2>
+            <div class="skill-grid" id="skill-grid">
+                </div>
+            <button class="skill-confirm-button" id="skill-confirm-button">확인</button>
+        </div>
+
+        <div class="results-section" id="results-section">
+            <h2 class="results-title">당신에게 추천하는 직무</h2>
+            <div class="job-recommendations" id="job-recommendations">
+                </div>
+        </div>
+
+        <div class="roadmap-section" id="roadmap-section">
+            <h2 class="roadmap-title">선택한 직무 준비 로드맵</h2>
+            <div class="roadmap-container" id="roadmap-container">
+                </div>
+        </div>
+
+        <!-- 챗봇 섹션: 항상 포함, 기본은 숨김 -->
+        <div class="chatbot-section" id="chatbot-section" style="display:none;">
+            <h2 class="roadmap-title">로드맵 챗봇</h2>
+            <div class="chatbot-messages" id="chatbot-messages"></div>
+            <div class="chatbot-input">
+                <input type="text" id="chatbot-input" placeholder="직무명을 입력하거나 궁금한 점을 물어보세요...">
+                <button id="chatbot-send">전송</button>
+            </div>
+        </div>
+    </main>
+
+    <div class="progress-bar" id="progress-bar-bottom">
+        <div class="progress-fill" id="progress-fill"></div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
