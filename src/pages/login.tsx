@@ -283,15 +283,6 @@ export default function LoginPage() {
                                 </Link>
                             </span>
                         </div>
-
-                        {/* 테스트용 계정 안내 (개발 환경에서만) */}
-                        {process.env.NODE_ENV === 'development' && (
-                            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded">
-                                <p className="text-xs text-blue-600 text-center">
-                                    🧪 테스트 계정: test@test.com / test1234!
-                                </p>
-                            </div>
-                        )}
                     </div>
                 </div>
             </div>
