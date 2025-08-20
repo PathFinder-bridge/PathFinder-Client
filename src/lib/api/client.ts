@@ -67,10 +67,19 @@ apiClient.interceptors.request.use(
     }
 );
 
-// 응답 인터셉터 - 401 에러 시 토큰 갱신 시도
+// 응답 인터셉터 - 로그인 관련 요청은 401 처리를 건너뛰도록 수정
 apiClient.interceptors.response.use(
-    (response) => response,    async (error) => {
+    (response) => response,
+    async (error) => {
         const originalRequest = error.config;
+
+        // 로그인 관련 요청이면 에러를 그대로 전달 (자동 리다이렉트 안함)
+        if (originalRequest.url?.includes('/auth/login') ||
+            originalRequest.url?.includes('/auth/signup') ||
+            originalRequest.url?.includes('/auth/verify')) {
+            console.log('로그인/회원가입 관련 요청 에러 - 자동 처리 건너뛰기');
+            return Promise.reject(error);
+        }
 
         if (error.response?.status === 401 && !originalRequest._retry) {
             originalRequest._retry = true;
@@ -89,9 +98,9 @@ apiClient.interceptors.response.use(
                 console.error('토큰 갱신 실패:', refreshError);
             }
 
-            // 토큰 갱신 실패 시 로그아웃 처리
+            // 토큰 갱신 실패 시 로그아웃 처리 (로그인 페이지가 아닐 때만)
             tokenManager.clearTokens();
-            if (typeof window !== 'undefined') {
+            if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
                 window.location.href = '/login';
             }
         }
