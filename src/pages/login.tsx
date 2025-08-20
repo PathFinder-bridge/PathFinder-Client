@@ -1,24 +1,28 @@
 'use client';
 
-import { useState, FormEvent, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import {useState, FormEvent, useEffect} from 'react';
+import {useRouter, useSearchParams} from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { authApi, LoginRequest, getKakaoAuthUrl } from '@/lib/api/auth';
-import { useAuth } from '@/hooks/useAuth';
-import { Layout } from '@/layout/Layout';
+import {authApi, LoginRequest, getKakaoAuthUrl} from '@/lib/api/auth';
+import {useAuth} from '@/hooks/useAuth';
+import {Layout} from '@/layout/Layout';
+import {Alert} from '@/components/common/Alert';
 
 export default function LoginPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const { loginSuccess, isLoggedIn } = useAuth();
+    const {loginSuccess, isLoggedIn} = useAuth();
 
     const [formData, setFormData] = useState<LoginRequest>({
         email: '',
         password: ''
     });
     const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState('');
+    const [alert, setAlert] = useState<{
+        type: 'error' | 'success';
+        message: string;
+    } | null>(null);
 
     // 이미 로그인된 상태면 홈으로 리다이렉트
     useEffect(() => {
@@ -32,26 +36,47 @@ export default function LoginPage() {
         const errorParam = searchParams.get('error');
         if (errorParam) {
             if (errorParam === 'kakao_login_failed') {
-                setError('카카오 로그인에 실패했습니다. 다시 시도해주세요.');
+                setAlert({
+                    type: 'error',
+                    message: '카카오 로그인에 실패했습니다. 다시 시도해주세요.'
+                });
             } else if (errorParam === 'kakao_code_missing') {
-                setError('카카오 로그인 인증이 취소되었습니다.');
+                setAlert({
+                    type: 'error',
+                    message: '카카오 로그인 인증이 취소되었습니다.'
+                });
             } else {
-                setError(decodeURIComponent(errorParam));
+                setAlert({
+                    type: 'error',
+                    message: decodeURIComponent(errorParam)
+                });
             }
         }
     }, [searchParams]);
+
+    const showError = (message: string) => {
+        setAlert({type: 'error', message});
+    };
+
+    const showSuccess = (message: string) => {
+        setAlert({type: 'success', message});
+    };
+
+    const clearAlert = () => {
+        setAlert(null);
+    };
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
 
         // 폼 유효성 검사
         if (!formData.email || !formData.password) {
-            setError('이메일과 비밀번호를 모두 입력해주세요.');
+            showError('이메일과 비밀번호를 모두 입력해주세요.');
             return;
         }
 
         setIsLoading(true);
-        setError('');
+        clearAlert();
 
         try {
             console.log('로그인 시도:', formData.email);
@@ -76,7 +101,7 @@ export default function LoginPage() {
                 console.log('로그인 성공 - 홈페이지로 이동');
             } else {
                 console.error('응답에 data가 없습니다:', response);
-                setError('로그인 응답이 올바르지 않습니다.');
+                showError('로그인 응답이 올바르지 않습니다.');
             }
         } catch (err: any) {
             console.error('로그인 에러 전체:', err);
@@ -118,7 +143,7 @@ export default function LoginPage() {
                 errorMessage = err.message || '알 수 없는 오류가 발생했습니다.';
             }
 
-            setError(errorMessage);
+            showError(errorMessage);
         } finally {
             setIsLoading(false);
         }
@@ -131,15 +156,15 @@ export default function LoginPage() {
             window.location.href = kakaoAuthUrl;
         } catch (error) {
             console.error('카카오 로그인 URL 생성 실패:', error);
-            setError('카카오 로그인 설정에 오류가 있습니다.');
+            showError('카카오 로그인 설정에 오류가 있습니다.');
         }
     };
 
     const handleInputChange = (field: keyof LoginRequest, value: string) => {
-        setFormData(prev => ({ ...prev, [field]: value }));
-        // 입력 시 에러 메시지 초기화
-        if (error) {
-            setError('');
+        setFormData(prev => ({...prev, [field]: value}));
+        // 입력 시 알림 메시지 초기화
+        if (alert) {
+            clearAlert();
         }
     };
 
@@ -149,7 +174,8 @@ export default function LoginPage() {
             <Layout variant="auth" showHeader={false} showFooter={false}>
                 <div className="min-h-screen flex items-center justify-center">
                     <div className="text-center">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#103D5E] mx-auto mb-4"></div>
+                        <div
+                            className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#103D5E] mx-auto mb-4"></div>
                         <p className="text-gray-600">로그인 중...</p>
                     </div>
                 </div>
@@ -162,7 +188,8 @@ export default function LoginPage() {
             <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8">
                 <div className="sm:mx-auto sm:w-full sm:max-w-md">
                     {/* 로고 */}
-                    <div className="flex justify-center items-center mb-8 cursor-pointer" onClick={() => router.push('/')}>
+                    <div className="flex justify-center items-center mb-8 cursor-pointer"
+                         onClick={() => router.push('/')}>
                         <Image
                             src="/icon/logo.svg"
                             alt="PathFinder"
@@ -179,15 +206,15 @@ export default function LoginPage() {
                             로그인
                         </h2>
 
-                        {error && (
-                            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-                                <div className="flex items-center">
-                                    <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                                    </svg>
-                                    <span>{error}</span>
-                                </div>
-                            </div>
+                        {/* Alert 컴포넌트 사용 */}
+                        {alert && (
+                            <Alert
+                                type={alert.type}
+                                message={alert.message}
+                                onClose={clearAlert}
+                                autoClose={true}
+                                autoCloseDelay={5000}
+                            />
                         )}
 
                         <form onSubmit={handleSubmit} className="space-y-4">
@@ -222,7 +249,8 @@ export default function LoginPage() {
                             >
                                 {isLoading ? (
                                     <div className="flex items-center">
-                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                        <div
+                                            className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                                         로그인 중...
                                     </div>
                                 ) : (
@@ -255,6 +283,15 @@ export default function LoginPage() {
                                 </Link>
                             </span>
                         </div>
+
+                        {/* 테스트용 계정 안내 (개발 환경에서만) */}
+                        {process.env.NODE_ENV === 'development' && (
+                            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded">
+                                <p className="text-xs text-blue-600 text-center">
+                                    🧪 테스트 계정: test@test.com / test1234!
+                                </p>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

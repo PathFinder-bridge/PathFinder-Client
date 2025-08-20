@@ -1,13 +1,14 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
+import {useState, FormEvent} from 'react';
+import {useRouter} from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { authApi } from '@/lib/api/auth';
-import { useFormValidation, validators } from '@/lib/validation';
-import { FormInput } from '@/components/common/FormInput';
-import { Layout } from '@/layout/Layout';
+import {authApi} from '@/lib/api/auth';
+import {useFormValidation, validators} from '@/lib/validation';
+import {FormInput} from '@/components/common/FormInput';
+import {Layout} from '@/layout/Layout';
+import {Alert} from '@/components/common/Alert';
 
 interface SignUpFormData {
     nickname: string;
@@ -69,14 +70,31 @@ export default function SignUpPage() {
         signUp: false
     });
 
-    const [error, setError] = useState('');
-    const [success, setSuccess] = useState('');
+    // Alert 상태 관리
+    const [alert, setAlert] = useState<{
+        type: 'error' | 'success';
+        message: string;
+    } | null>(null);
+
     const [passwordConfirmError, setPasswordConfirmError] = useState<string | null>(null);
 
-    const { errors, validateSingleField, clearFieldError } = useFormValidation(validationConfig);
+    const {errors, validateSingleField, clearFieldError} = useFormValidation(validationConfig);
+
+    // Alert 관리 함수들
+    const showError = (message: string) => {
+        setAlert({type: 'error', message});
+    };
+
+    const showSuccess = (message: string) => {
+        setAlert({type: 'success', message});
+    };
+
+    const clearAlert = () => {
+        setAlert(null);
+    };
 
     const handleInputChange = async (field: keyof SignUpFormData, value: string | boolean) => {
-        setFormData(prev => ({ ...prev, [field]: value }));
+        setFormData(prev => ({...prev, [field]: value}));
 
         if (typeof value === 'string' && field !== 'agreeToTerms') {
             if (field === 'passwordConfirm') {
@@ -104,21 +122,18 @@ export default function SignUpPage() {
                 verificationCompleted: false,
                 verificationToken: ''
             });
-            setError('');
-            setSuccess('');
+            clearAlert();
         }
     };
 
     // 1단계: 이메일 중복 확인
     const handleEmailDuplicateCheck = async () => {
         if (!formData.email || !validators.email(formData.email)) {
-            setError('올바른 이메일을 입력해주세요.');
+            showError('올바른 이메일을 입력해주세요.');
             return;
         }
 
-        setIsLoading(prev => ({ ...prev, checkDuplicate: true }));
-        setError('');
-        setSuccess('');
+        setIsLoading(prev => ({...prev, checkDuplicate: true}));
 
         try {
             console.log('이메일 중복 확인 시작:', formData.email);
@@ -132,7 +147,7 @@ export default function SignUpPage() {
                     emailDuplicateChecked: true,
                     emailAvailable: true
                 }));
-                setSuccess('사용 가능한 이메일입니다. 인증하기 버튼을 클릭해주세요.');
+                showSuccess('사용 가능한 이메일입니다. 인증하기 버튼을 클릭해주세요.');
             } else {
                 // 중복된 이메일
                 setFormState(prev => ({
@@ -140,25 +155,23 @@ export default function SignUpPage() {
                     emailDuplicateChecked: true,
                     emailAvailable: false
                 }));
-                setError('이미 사용 중인 이메일입니다. 다른 이메일을 사용해주세요.');
+                showError('이미 사용 중인 이메일입니다. 다른 이메일을 사용해주세요.');
             }
         } catch (err) {
             console.error('이메일 중복 확인 실패:', err);
-            setError(err instanceof Error ? err.message : '이메일 중복 확인에 실패했습니다.');
+            showError(err instanceof Error ? err.message : '이메일 중복 확인에 실패했습니다.');
         } finally {
-            setIsLoading(prev => ({ ...prev, checkDuplicate: false }));
+            setIsLoading(prev => ({...prev, checkDuplicate: false}));
         }
     };
 
     // 2단계: 인증 코드 발송
     const handleSendVerificationCode = async () => {
-        setIsLoading(prev => ({ ...prev, sendCode: true }));
-        setError('');
-        setSuccess('');
+        setIsLoading(prev => ({...prev, sendCode: true}));
 
         try {
             console.log('인증 코드 발송 시작:', formData.email);
-            const response = await authApi.verifyEmail({ email: formData.email });
+            const response = await authApi.verifyEmail({email: formData.email});
             console.log('인증 코드 발송 응답:', response);
 
             if (response.data) {
@@ -166,25 +179,24 @@ export default function SignUpPage() {
                     ...prev,
                     verificationCodeSent: true
                 }));
-                setSuccess(`인증 코드가 ${formData.email}로 발송되었습니다. 이메일을 확인해주세요.`);
+                showSuccess(`인증 코드가 ${formData.email}로 발송되었습니다. 이메일을 확인해주세요.`);
             }
         } catch (err) {
             console.error('인증 코드 발송 실패:', err);
-            setError(err instanceof Error ? err.message : '인증 코드 발송에 실패했습니다.');
+            showError(err instanceof Error ? err.message : '인증 코드 발송에 실패했습니다.');
         } finally {
-            setIsLoading(prev => ({ ...prev, sendCode: false }));
+            setIsLoading(prev => ({...prev, sendCode: false}));
         }
     };
 
     // 3단계: 인증 코드 확인
     const handleVerifyCode = async () => {
         if (!validators.verificationCode(formData.verificationCode)) {
-            setError('올바른 인증번호를 입력해주세요.');
+            showError('올바른 인증번호를 입력해주세요.');
             return;
         }
 
-        setIsLoading(prev => ({ ...prev, verifyCode: true }));
-        setError('');
+        setIsLoading(prev => ({...prev, verifyCode: true}));
 
         try {
             console.log('인증번호 확인 시작:', formData.verificationCode);
@@ -200,51 +212,50 @@ export default function SignUpPage() {
                     verificationCompleted: true,
                     verificationToken: response.data.verificationToken
                 }));
-                setSuccess('이메일 인증이 완료되었습니다. 나머지 정보를 입력해주세요.');
+                showSuccess('이메일 인증이 완료되었습니다. 나머지 정보를 입력해주세요.');
             }
         } catch (err) {
             console.error('인증번호 확인 실패:', err);
-            setError(err instanceof Error ? err.message : '인증번호 확인에 실패했습니다.');
+            showError(err instanceof Error ? err.message : '인증번호 확인에 실패했습니다.');
         } finally {
-            setIsLoading(prev => ({ ...prev, verifyCode: false }));
+            setIsLoading(prev => ({...prev, verifyCode: false}));
         }
     };
 
     // 4단계: 회원가입
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
-        setError('');
 
         // 유효성 검사
         const nicknameValid = validators.nickname(formData.nickname);
         const passwordValid = validators.password(formData.password);
 
         if (!nicknameValid.isValid) {
-            setError(nicknameValid.message || '이름을 확인해주세요.');
+            showError(nicknameValid.message || '이름을 확인해주세요.');
             return;
         }
 
         if (!passwordValid.isValid) {
-            setError(passwordValid.message || '비밀번호를 확인해주세요.');
+            showError(passwordValid.message || '비밀번호를 확인해주세요.');
             return;
         }
 
         if (!formState.verificationCompleted) {
-            setError('이메일 인증을 완료해주세요.');
+            showError('이메일 인증을 완료해주세요.');
             return;
         }
 
         if (formData.password !== formData.passwordConfirm) {
-            setError('비밀번호가 일치하지 않습니다.');
+            showError('비밀번호가 일치하지 않습니다.');
             return;
         }
 
         if (!formData.agreeToTerms) {
-            setError('개인정보 수집이용 동의는 필수입니다.');
+            showError('개인정보 수집이용 동의는 필수입니다.');
             return;
         }
 
-        setIsLoading(prev => ({ ...prev, signUp: true }));
+        setIsLoading(prev => ({...prev, signUp: true}));
 
         try {
             console.log('회원가입 시작');
@@ -255,16 +266,16 @@ export default function SignUpPage() {
             });
 
             if (response.data) {
-                setSuccess('회원가입이 완료되었습니다. 로그인 페이지로 이동합니다.');
+                showSuccess('회원가입이 완료되었습니다. 로그인 페이지로 이동합니다.');
                 setTimeout(() => {
                     router.push('/login');
                 }, 2000);
             }
         } catch (err) {
             console.error('회원가입 실패:', err);
-            setError(err instanceof Error ? err.message : '회원가입에 실패했습니다.');
+            showError(err instanceof Error ? err.message : '회원가입에 실패했습니다.');
         } finally {
-            setIsLoading(prev => ({ ...prev, signUp: false }));
+            setIsLoading(prev => ({...prev, signUp: false}));
         }
     };
 
@@ -288,7 +299,8 @@ export default function SignUpPage() {
             return {
                 text: '발송완료',
                 disabled: true,
-                onClick: () => {},
+                onClick: () => {
+                },
                 loading: false
             };
         }
@@ -296,15 +308,13 @@ export default function SignUpPage() {
 
     const emailButtonState = getEmailButtonState();
 
-    // 디버깅용 로그
-    console.log('현재 formState:', formState);
-
     return (
         <Layout variant="auth" showHeader={false} showFooter={false}>
             <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8">
                 <div className="sm:mx-auto sm:w-full sm:max-w-md">
                     {/* 로고 */}
-                    <div className="flex justify-center items-center mb-8 cursor-pointer" onClick={() => router.push('/')}>
+                    <div className="flex justify-center items-center mb-8 cursor-pointer"
+                         onClick={() => router.push('/')}>
                         <Image
                             src="/icon/logo.svg"
                             alt="PathFinder"
@@ -321,16 +331,15 @@ export default function SignUpPage() {
                             회원가입
                         </h2>
 
-                        {error && (
-                            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-                                {error}
-                            </div>
-                        )}
-
-                        {success && (
-                            <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded">
-                                {success}
-                            </div>
+                        {/* Alert 컴포넌트 사용 */}
+                        {alert && (
+                            <Alert
+                                type={alert.type}
+                                message={alert.message}
+                                onClose={clearAlert}
+                                autoClose={true}
+                                autoCloseDelay={5000}
+                            />
                         )}
 
                         <form onSubmit={handleSubmit} className="space-y-4">
@@ -365,7 +374,8 @@ export default function SignUpPage() {
                                 >
                                     {emailButtonState.loading ? (
                                         <div className="flex items-center">
-                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                            <div
+                                                className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                                             처리 중...
                                         </div>
                                     ) : (
@@ -396,7 +406,8 @@ export default function SignUpPage() {
                                     >
                                         {isLoading.verifyCode ? (
                                             <div className="flex items-center">
-                                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                                <div
+                                                    className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                                                 확인 중...
                                             </div>
                                         ) : formState.verificationCompleted ? (
@@ -452,7 +463,8 @@ export default function SignUpPage() {
                             >
                                 {isLoading.signUp ? (
                                     <div className="flex items-center">
-                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                        <div
+                                            className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                                         가입 중...
                                     </div>
                                 ) : (
