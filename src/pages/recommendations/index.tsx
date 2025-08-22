@@ -167,7 +167,7 @@ export default function JobRecommendationsPage() {
 
                                             {/* ▼▼▼ 2. 버튼 로직을 수정합니다. ▼▼▼ */}
                                             {selectedJob.jobTitle === '백엔드 개발자' ? (
-                                                <Link href="/job-recommendations/quest" passHref>
+                                                <Link href="/recommendations/quest" passHref>
                                                     <button
                                                         className="mt-6 w-full sm:w-auto bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-transform duration-200 hover:scale-105">
                                                         모험 시작하기 →

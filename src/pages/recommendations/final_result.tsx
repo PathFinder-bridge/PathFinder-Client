@@ -59,14 +59,6 @@ const skillJobMapping: { [key: string]: string[] } = {
 };
 
 
-interface RecommendedJob {
-    id: string;
-    title: string;
-    description: string;
-    score: number;
-    matchRate: number;
-}
-
 export default function FinalResultsPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -134,7 +126,7 @@ export default function FinalResultsPage() {
     const handleGoToRoadmap = () => {
         if (recommendedJobs.length === 0) return;
         const jobsQueryParam = encodeURIComponent(JSON.stringify(recommendedJobs));
-        router.push(`/job-roadmaps?jobs=${jobsQueryParam}`);
+        router.push(`/roadmaps?jobs=${jobsQueryParam}`);
     };
 
     return (

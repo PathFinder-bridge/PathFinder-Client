@@ -1,12 +1,10 @@
-// PathFinder-Client/src/pages/job-recommendations/quest.tsx
-
 'use client';
 
 import React, {useState, useMemo} from 'react';
 import Link from 'next/link';
 import {Layout} from '@/layout/Layout';
 import {ProtectedRoute} from '@/components/common/ProtectedRoute';
-import {useRouter} from 'next/navigation'; // 1. useRouter 가져오기
+import {useRouter} from 'next/navigation';
 
 import {
     DndContext,
@@ -136,7 +134,7 @@ const QuestCompletionScreen = ({onFinishExperience}: { onFinishExperience: () =>
                 </div>
             </div>
             <div className="flex gap-6">
-                <Link href="/job-recommendations">
+                <Link href="/recommendations">
                     <button
                         className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 px-8 text-lg rounded-full shadow-lg transition-transform hover:scale-105">
                         다른 캐릭터 체험하기
@@ -339,7 +337,7 @@ export default function BackendQuestPage() {
         alert(`'${jobTitle}'을(를) 선택했습니다. 이제 잠재된 직무 성향을 알아보기 위한 질문을 시작하겠습니다.`);
 
         // 3. 설문 페이지로 이동시키는 코드 추가
-        router.push('/job-recommendations/surveypage');
+        router.push('/recommendations/surveypage');
     };
 
     return (

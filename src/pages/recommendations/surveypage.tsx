@@ -52,8 +52,8 @@ export default function SurveyPage() {
             // 마지막 질문에 답변 완료 시, 결과 처리
             console.log('Final Answers:', newAnswers);
             alert('모든 질문에 답변하셨습니다. 결과를 분석합니다.');
-            router.push('/job-recommendations/skill_page');
-            // router.push('/job-recommendations/results');
+            router.push('/recommendations/skill_page');
+            // router.push('/recommendations/results');
         } else {
             // 다음 질문으로 이동
             setCurrentQuestionIndex(currentQuestionIndex + 1);

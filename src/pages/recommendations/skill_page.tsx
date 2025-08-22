@@ -144,7 +144,7 @@ export default function SkillSelectionPage() {
         alert('선택이 완료되었습니다. 최종 추천 결과를 보여드릴게요.');
 
         // URL 쿼리 파라미터로 두 데이터를 모두 전달하며 final_result 페이지로 이동합니다.
-        router.push(`/job-recommendations/final_result?answers=${surveyAnswers}&skills=${JSON.stringify(selectedSkills)}`);
+        router.push(`/recommendations/final_result?answers=${surveyAnswers}&skills=${JSON.stringify(selectedSkills)}`);
     };
 
     return (

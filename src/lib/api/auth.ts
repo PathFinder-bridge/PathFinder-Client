@@ -177,7 +177,7 @@ export const authApi = {
     // 로그아웃
     logout: async (): Promise<BackendResponse<void>> => {
         try {
-            const response = await apiClient.post<BackendResponse<void>>('/api/auth/logout');
+            const response = await apiClient.post<BackendResponse<void>>('/api/users/logout');
             tokenManager.clearTokens();
             return response.data;
         } catch (error: any) {
