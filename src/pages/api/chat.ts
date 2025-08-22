@@ -1,5 +1,4 @@
 // pages/api/chat.ts
-
 import type { NextApiRequest, NextApiResponse } from 'next';
 import OpenAI from 'openai';
 
@@ -34,8 +33,13 @@ export default async function handler(
     });
 
     const answer = response.choices[0].message.content;
-    res.status(200).json({ answer });
+    
+    if (!answer) {
+      return res.status(500).json({ error: 'AI로부터 응답을 받을 수 없습니다.' });
+    }
 
+    res.status(200).json({ answer });
+    
   } catch (error) {
     console.error('API Route Error:', error);
     res.status(500).json({ error: 'Failed to fetch response from OpenAI' });
