@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 
 export const Footer: React.FC = () => {
     const currentYear = new Date().getFullYear();
@@ -8,12 +9,14 @@ export const Footer: React.FC = () => {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <div className="text-center">
                     <div className="flex justify-center items-center mb-4">
-                        <div className="flex items-center space-x-2">
-                            <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center">
-                                <span className="text-white text-sm font-bold">∞</span>
-                            </div>
-                            <span className="text-lg font-semibold text-gray-900">PathFinder</span>
-                        </div>
+                        <Image
+                            src="/icon/logo.svg"
+                            alt="PathFinder"
+                            width={160}
+                            height={45}
+                            className="h-9"
+                            priority
+                        />
                     </div>
                     <p className="text-gray-500 text-sm">
                         &copy; {currentYear} PathFinder. All rights reserved.
