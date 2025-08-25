@@ -1,193 +1,216 @@
 'use client';
 
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
-import {Layout} from '@/layout/Layout';
-import {ProtectedRoute} from '@/components/common/ProtectedRoute';
-
-// TypeScript를 사용하는 경우, 데이터의 타입을 명시해주면 개발이 편리해집니다.
-interface Job {
-    emoji: string;
-    animalName: string;
-    jobTitle: string;
-    features: string[];
-}
-
-// 각 직무에 해당하는 동물 데이터를 확장합니다. (features 추가)
-const jobAnimals: Job[] = [
-    {
-        emoji: '🦉',
-        animalName: '똑똑한 부엉이',
-        jobTitle: 'AI 엔지니어',
-        features: ['머신러닝 모델 개발', '데이터 분석 및 처리', '알고리즘 설계', '파이프라인 구축']
-    },
-    {
-        emoji: '🦊',
-        animalName: '영리한 여우',
-        jobTitle: '디자인 마케터',
-        features: ['브랜드 전략 수립', '콘텐츠 디자인', '사용자 경험(UX) 설계', '마케팅 캠페인 실행']
-    },
-    {
-        emoji: '🐨',
-        animalName: '차분한 코알라',
-        jobTitle: '소프트웨어 엔지니어',
-        features: ['애플리케이션 설계', '효율적인 코드 작성', '테스트 및 디버깅', '팀 협업']
-    },
-    {
-        emoji: '🐻',
-        animalName: '든든한 곰',
-        jobTitle: '백엔드 개발자',
-        features: ['고성능 서버 구축', '보안 전문가', '데이터베이스 최적화', '시스템 아키텍처 설계', '로그 분석']
-    },
-    {
-        emoji: '😺',
-        animalName: '정의로운 고양이',
-        jobTitle: '프론트엔드 개발자',
-        features: ['UI/UX 구현', '웹 성능 최적화', 'API 연동', '크로스 브라우징 지원']
-    },
-    {emoji: '🦁', animalName: '용감한 사자', jobTitle: '사이버 보안 엔지니어', features: ['취약점 분석', '모의 해킹', '보안 솔루션 구축', '침해 사고 대응']},
-    {
-        emoji: '🐘',
-        animalName: '기억력 좋은 코끼리',
-        jobTitle: '데이터 엔지니어',
-        features: ['데이터 파이프라인 설계', '대용량 데이터 처리', 'ETL/ELT 구축', '데이터 웨어하우스 관리']
-    },
-    {
-        emoji: '🦅',
-        animalName: '눈에 띄는 독수리',
-        jobTitle: '쉽게 배우는 풀스택 웹 개발',
-        features: ['프론트엔드 개발', '백엔드 개발', '데이터베이스 연동', '클라우드 배포']
-    },
-    {
-        emoji: '🐧',
-        animalName: '분석가 펭귄',
-        jobTitle: '데이터 분석가',
-        features: ['비즈니스 인사이트 도출', '데이터 시각화', '통계 분석', 'A/B 테스트 설계']
-    },
-    {
-        emoji: '🐿️',
-        animalName: '바쁜 다람쥐',
-        jobTitle: 'ios 아키텍트',
-        features: ['앱 아키텍처 설계', '성능 최적화', 'Swift/Objective-C', 'HIG 준수']
-    },
-    {emoji: '🐼', animalName: '손재주 좋은 판다', jobTitle: '모듈 엔지니어', features: ['하드웨어 모듈 설계', '펌웨어 개발', '회로 분석', '테스트 및 검증']},
-    {emoji: '🦄', animalName: '빠른 유니콘', jobTitle: '자동수준차 엔지니어', features: ['제어 시스템 개발', '센서 퓨전', '경로 계획 알고리즘', '시뮬레이션']},
-    {
-        emoji: '🦙',
-        animalName: '상냥한 라마',
-        jobTitle: '컴퓨터 비전 엔지니어',
-        features: ['이미지 처리 알고리즘', '객체 탐지 및 추적', '딥러닝 모델 적용', '데이터셋 구축']
-    },
-];
-
+import { Layout } from '@/layout/Layout';
+import { ProtectedRoute } from '@/components/common/ProtectedRoute';
+import { jobAnimals } from '@/lib/data';
+import { Job } from '@/lib/types';
 
 export default function JobRecommendationsPage() {
-    // 선택된 직무 카드의 정보를 저장할 state (초기값은 null)
     const [selectedJob, setSelectedJob] = useState<Job | null>(null);
 
-    // 카드를 클릭했을 때 실행될 함수
     const handleCardClick = (job: Job) => {
-        // 이미 선택된 카드를 다시 클릭하면 선택 해제(null로 설정)
-        if (selectedJob && selectedJob.jobTitle === job.jobTitle) {
-            setSelectedJob(null);
-        } else {
-            // 다른 카드를 클릭하면 해당 카드의 정보로 state 업데이트
-            setSelectedJob(job);
-        }
+        setSelectedJob(selectedJob?.jobTitle === job.jobTitle ? null : job);
     };
 
     return (
         <ProtectedRoute requiresProfile={true}>
             <Layout>
-                <div className="min-h-screen bg-white py-12">
+                <div className="min-h-screen bg-gray-50 py-12">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="text-center mb-12">
-                            <h1 className="text-4xl font-extrabold text-gray-900 sm:text-5xl">
-                                동물 친구들과 직무 체험
-                            </h1>
-                            <p className="mt-4 text-xl text-gray-600">
-                                귀여운 동물 친구를 선택하고 직무 모험을 시작해보세요!
-                            </p>
-                        </div>
+                        <JobRecommendationHeader />
 
-                        <div
-                            className="relative bg-gradient-to-br from-purple-500 to-indigo-700 p-8 rounded-3xl shadow-2xl">
-                            {/* 직무 카드들을 담는 그리드 컨테이너 */}
-                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6">
-                                {jobAnimals.map((job) => (
-                                    <div
-                                        key={job.jobTitle}
-                                        onClick={() => handleCardClick(job)}
-                                        className={`group flex flex-col items-center justify-center p-4 bg-white/20 backdrop-blur-sm rounded-2xl shadow-lg text-white text-center cursor-pointer transform transition-all duration-300 hover:scale-105 hover:bg-white/30
-                                            ${selectedJob?.jobTitle === job.jobTitle ? 'ring-4 ring-yellow-300 scale-105' : 'ring-2 ring-transparent'}` // 선택된 카드에 테두리 효과 추가
-                                        }
-                                        style={{minHeight: '160px'}}
-                                    >
-                                        <div
-                                            className="text-5xl mb-2 transition-transform duration-300 group-hover:scale-110">
-                                            {job.emoji}
-                                        </div>
-                                        <p className="text-sm font-semibold text-purple-200">{job.animalName}</p>
-                                        <h3 className="text-base font-bold mt-1">{job.jobTitle}</h3>
-                                    </div>
-                                ))}
-                            </div>
-
-                            {/* 선택된 직무가 있을 때만 상세 정보창을 표시 */}
-                            {selectedJob && (
-                                <div
-                                    className="mt-8 bg-white rounded-2xl shadow-xl p-8 transition-all duration-500 ease-in-out animate-fade-in-up">
-                                    <div className="flex flex-col sm:flex-row items-center sm:items-start gap-8">
-                                        {/* 왼쪽: 아이콘 및 직무 정보 */}
-                                        <div className="flex-shrink-0 flex flex-col items-center text-center">
-                                            <div className="bg-gray-100 rounded-full p-4">
-                                                <span className="text-8xl">{selectedJob.emoji}</span>
-                                            </div>
-                                            <h3 className="text-xl font-bold text-gray-800 mt-4">{selectedJob.animalName}</h3>
-                                            <span
-                                                className="mt-1 text-sm font-semibold text-green-800 bg-green-100 px-3 py-1 rounded-full">{selectedJob.jobTitle}</span>
-                                        </div>
-
-                                        {/* 오른쪽: 개발 특성 및 버튼 */}
-                                        <div className="flex-grow">
-                                            <h4 className="text-lg font-bold text-gray-900 mb-3">개발 특성</h4>
-                                            <ul className="space-y-2">
-                                                {selectedJob.features.map((feature, index) => (
-                                                    <li key={index} className="flex items-center text-gray-700">
-                                                        <svg className="w-4 h-4 mr-2 text-purple-500"
-                                                             fill="currentColor" viewBox="0 0 20 20">
-                                                            <path fillRule="evenodd"
-                                                                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                                                  clipRule="evenodd"></path>
-                                                        </svg>
-                                                        {feature}
-                                                    </li>
-                                                ))}
-                                            </ul>
-
-                                            {/* ▼▼▼ 2. 버튼 로직을 수정합니다. ▼▼▼ */}
-                                            {selectedJob.jobTitle === '백엔드 개발자' ? (
-                                                <Link href="/recommendations/quest" passHref>
-                                                    <button
-                                                        className="mt-6 w-full sm:w-auto bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-transform duration-200 hover:scale-105">
-                                                        모험 시작하기 →
-                                                    </button>
-                                                </Link>
-                                            ) : (
-                                                <button disabled
-                                                        className="mt-6 w-full sm:w-auto bg-gray-400 text-white font-bold py-3 px-8 rounded-full cursor-not-allowed">
-                                                    모험 준비중...
-                                                </button>
-                                            )}
-                                            {/* ▲▲▲ 2. 버튼 로직 수정 끝 ▲▲▲ */}
-                                        </div>
-                                    </div>
+                        <div className="bg-gradient-to-br from-indigo-500/10 via-purple-50 to-pink-500/10 rounded-2xl shadow-lg p-8 border-2 border-indigo-200/50 relative overflow-hidden">
+                            <div className="relative z-10">
+                                <div className="text-center mb-6">
+                                    <h2 className="text-2xl font-bold text-gray-800 mb-2">캐릭터 선택</h2>
+                                    <p className="text-gray-600">마음에 드는 직업 캐릭터를 클릭해보세요!</p>
                                 </div>
-                            )}
+
+                                <JobGrid
+                                    jobs={jobAnimals}
+                                    selectedJob={selectedJob}
+                                    onCardClick={handleCardClick}
+                                />
+
+                                {selectedJob && (
+                                    <JobDetailCard job={selectedJob} />
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
             </Layout>
         </ProtectedRoute>
+    );
+}
+
+function JobRecommendationHeader() {
+    return (
+        <div className="text-center mb-12">
+            <h1 className="text-3xl font-bold text-gray-800 sm:text-5xl mb-5">
+                🎮 직업 월드 탐험하기
+            </h1>
+            <p className="text-xl text-gray-600 mb-4">
+                체험하고 싶은 캐릭터를 선택하고 직업 모험을 시작해보세요!
+            </p>
+            <div className="flex justify-center items-center gap-2 text-sm text-gray-500">
+                <span className="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full font-medium">
+                    🏆 Level 1
+                </span>
+                <span>•</span>
+                <span>직업 탐험가</span>
+            </div>
+        </div>
+    );
+}
+
+interface JobGridProps {
+    jobs: Job[];
+    selectedJob: Job | null;
+    onCardClick: (job: Job) => void;
+}
+
+function JobGrid({ jobs, selectedJob, onCardClick }: JobGridProps) {
+    return (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6 mb-8">
+            {jobs.map((job) => (
+                <JobAnimalCard
+                    key={job.jobTitle}
+                    job={job}
+                    isSelected={selectedJob?.jobTitle === job.jobTitle}
+                    onClick={() => onCardClick(job)}
+                />
+            ))}
+        </div>
+    );
+}
+
+interface JobAnimalCardProps {
+    job: Job;
+    isSelected: boolean;
+    onClick: () => void;
+}
+
+function JobAnimalCard({ job, isSelected, onClick }: JobAnimalCardProps) {
+    return (
+        <div
+            onClick={onClick}
+            className={`group flex flex-col items-center justify-center p-6 bg-white/80 backdrop-blur-sm border-2 rounded-xl text-center cursor-pointer transform transition-all duration-300 hover:shadow-lg hover:scale-110 hover:-translate-y-1 ${
+                isSelected
+                    ? 'border-purple-400 bg-gradient-to-br from-purple-50 to-pink-50 shadow-lg scale-110 -translate-y-1 ring-4 ring-purple-200'
+                    : 'border-gray-200 hover:border-purple-300 shadow-md'
+            }`}
+            style={{ minHeight: '180px' }}
+        >
+            <div className={`text-5xl mb-3 transition-all duration-300 group-hover:scale-125 ${isSelected ? 'animate-bounce' : ''}`}>
+                {job.emoji}
+            </div>
+            <div className={`w-2 h-2 rounded-full mb-2 transition-colors duration-300 ${
+                isSelected ? 'bg-purple-500 animate-pulse' : 'bg-gray-300'
+            }`}></div>
+            <p className="text-sm font-medium text-gray-500 mb-1">{job.animalName}</p>
+            <h3 className={`text-base font-semibold transition-colors duration-300 ${
+                isSelected ? 'text-purple-700' : 'text-gray-800'
+            }`}>{job.jobTitle}</h3>
+        </div>
+    );
+}
+
+interface JobDetailCardProps {
+    job: Job;
+}
+
+function JobDetailCard({ job }: JobDetailCardProps) {
+    const isBackendDeveloper = job.jobTitle === '백엔드 개발자';
+
+    return (
+        <div className="mt-8 bg-gradient-to-r from-white to-purple-50/50 rounded-xl p-8 border-2 border-purple-200 shadow-lg transition-all duration-500 ease-in-out animate-fade-in-up relative overflow-hidden">
+            {/* 게임 느낌 장식 */}
+
+            <div className="relative z-10">
+                <div className="flex items-center gap-3 mb-6">
+                    <span className="text-2xl">🎯</span>
+                    <h3 className="text-2xl font-bold text-gray-800">캐릭터 정보</h3>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-center sm:items-start gap-8">
+                    <JobDetailIcon job={job} />
+                    <JobDetailContent job={job} isBackendDeveloper={isBackendDeveloper} />
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function JobDetailIcon({ job }: { job: Job }) {
+    return (
+        <div className="flex-shrink-0 flex flex-col items-center text-center">
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+                <span className="text-8xl">{job.emoji}</span>
+            </div>
+            <h3 className="text-xl font-bold text-gray-800 mt-4">{job.animalName}</h3>
+            <span className="mt-2 text-sm font-semibold text-purple-700 bg-purple-100 px-4 py-2 rounded-full">
+                {job.jobTitle}
+            </span>
+        </div>
+    );
+}
+
+function JobDetailContent({ job, isBackendDeveloper }: { job: Job; isBackendDeveloper: boolean }) {
+    return (
+        <div className="flex-grow">
+            <div className="flex items-center gap-2 mb-4">
+                <span className="text-xl">⚡</span>
+                <h4 className="text-xl font-bold text-gray-900">스킬 & 특성</h4>
+            </div>
+            <FeatureList features={job.features} />
+            <ActionButton isBackendDeveloper={isBackendDeveloper} />
+        </div>
+    );
+}
+
+function FeatureList({ features }: { features: string[] }) {
+    return (
+        <ul className="space-y-3 mb-8">
+            {features.map((feature, index) => (
+                <li key={index} className="flex items-start text-gray-700">
+                    <div className="w-6 h-6 mr-3 mt-0.5 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <svg className="w-3 h-3 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <span className="text-gray-800">{feature}</span>
+                </li>
+            ))}
+        </ul>
+    );
+}
+
+function ActionButton({ isBackendDeveloper }: { isBackendDeveloper: boolean }) {
+    if (isBackendDeveloper) {
+        return (
+            <Link href="/recommendations/quest" passHref>
+                <button className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 hover:-translate-y-0.5">
+                    🚀 모험 시작하기
+                    <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                </button>
+            </Link>
+        );
+    }
+
+    return (
+        <button
+            disabled
+            className="inline-flex items-center px-6 py-3 bg-gray-400 text-white font-semibold rounded-xl cursor-not-allowed opacity-75"
+        >
+            🔒 준비 중...
+            <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+        </button>
     );
 }
