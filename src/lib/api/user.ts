@@ -1,4 +1,5 @@
 import apiClient from './client';
+import {BackendResponse, ApiResult, handleApiError} from './common';
 
 // 타입 정의
 export interface ProfileStatusResponse {
@@ -32,36 +33,30 @@ export interface ChangePasswordRequest {
     confirmPassword: string;
 }
 
-// 백엔드 응답 구조에 맞춘 타입 정의
-export interface BackendResponse<T> {
-    timestamp: string;
-    message?: string;
-    data: T;
-}
-
-// API 결과 타입
-export interface ApiResult<T> {
-    success: boolean;
-    data?: T;
-    error?: string;
-    status?: number;
-}
-
 // API 함수들
 export const userApi = {
     // 프로필 완성도 확인
     getProfileStatus: async (): Promise<ApiResult<ProfileStatusResponse>> => {
         try {
             const response = await apiClient.get<BackendResponse<ProfileStatusResponse>>('/api/users/profile-status');
-            return {
-                success: true,
-                data: response.data.data
-            };
+
+            if (response.data.success) {
+                return {
+                    success: true,
+                    data: response.data.data
+                };
+            } else {
+                return {
+                    success: false,
+                    error: response.data.message || '프로필 상태를 확인할 수 없습니다.',
+                    errorCode: response.data.errorCode
+                };
+            }
         } catch (error: any) {
-            console.error('프로필 상태 확인 오류:', error);
+            console.error('프로필 상태 확인 네트워크 오류:', error);
             return {
                 success: false,
-                error: error.response?.data?.message || '프로필 상태를 확인할 수 없습니다.',
+                error: '네트워크 오류가 발생했습니다.',
                 status: error.response?.status
             };
         }
@@ -71,17 +66,22 @@ export const userApi = {
     getUserProfile: async (): Promise<ApiResult<UserProfileResponse>> => {
         try {
             const response = await apiClient.get<BackendResponse<UserProfileResponse>>('/api/users/profile');
-            return {
-                success: true,
-                data: response.data.data
-            };
+
+            if (response.data.success) {
+                return {
+                    success: true,
+                    data: response.data.data
+                };
+            } else {
+                return {
+                    success: false,
+                    error: response.data.message || '프로필 정보를 불러올 수 없습니다.',
+                    errorCode: response.data.errorCode
+                };
+            }
         } catch (error: any) {
             console.error('프로필 조회 오류:', error);
-            return {
-                success: false,
-                error: error.response?.data?.message || '프로필 정보를 불러올 수 없습니다.',
-                status: error.response?.status
-            };
+            return handleApiError(error, '프로필 정보를 불러올 수 없습니다.');
         }
     },
 
@@ -89,17 +89,22 @@ export const userApi = {
     updateProfile: async (data: UpdateProfileRequest): Promise<ApiResult<UserProfileResponse>> => {
         try {
             const response = await apiClient.put<BackendResponse<UserProfileResponse>>('/api/users/profile', data);
-            return {
-                success: true,
-                data: response.data.data
-            };
+
+            if (response.data.success) {
+                return {
+                    success: true,
+                    data: response.data.data
+                };
+            } else {
+                return {
+                    success: false,
+                    error: response.data.message || '프로필 업데이트에 실패했습니다.',
+                    errorCode: response.data.errorCode
+                };
+            }
         } catch (error: any) {
             console.error('프로필 업데이트 오류:', error);
-            return {
-                success: false,
-                error: error.response?.data?.message || '프로필 업데이트에 실패했습니다.',
-                status: error.response?.status
-            };
+            return handleApiError(error, '프로필 업데이트에 실패했습니다.');
         }
     },
 
@@ -107,16 +112,21 @@ export const userApi = {
     changePassword: async (data: ChangePasswordRequest): Promise<ApiResult<void>> => {
         try {
             const response = await apiClient.put<BackendResponse<void>>('/api/users/password', data);
-            return {
-                success: true
-            };
+
+            if (response.data.success) {
+                return {
+                    success: true
+                };
+            } else {
+                return {
+                    success: false,
+                    error: response.data.message || '비밀번호 변경에 실패했습니다.',
+                    errorCode: response.data.errorCode
+                };
+            }
         } catch (error: any) {
             console.error('비밀번호 변경 오류:', error);
-            return {
-                success: false,
-                error: error.response?.data?.message || '비밀번호 변경에 실패했습니다.',
-                status: error.response?.status
-            };
+            return handleApiError(error, '비밀번호 변경에 실패했습니다.');
         }
     },
 
@@ -124,17 +134,22 @@ export const userApi = {
     checkNickname: async (nickname: string): Promise<ApiResult<boolean>> => {
         try {
             const response = await apiClient.get<BackendResponse<boolean>>(`/api/users/check-nickname?nickname=${encodeURIComponent(nickname)}`);
-            return {
-                success: true,
-                data: response.data.data
-            };
+
+            if (response.data.success) {
+                return {
+                    success: true,
+                    data: response.data.data
+                };
+            } else {
+                return {
+                    success: false,
+                    error: response.data.message || '닉네임 중복 확인에 실패했습니다.',
+                    errorCode: response.data.errorCode
+                };
+            }
         } catch (error: any) {
             console.error('닉네임 중복 확인 오류:', error);
-            return {
-                success: false,
-                error: error.response?.data?.message || '닉네임 중복 확인에 실패했습니다.',
-                status: error.response?.status
-            };
+            return handleApiError(error, '닉네임 중복 확인에 실패했습니다.');
         }
     }
 };
