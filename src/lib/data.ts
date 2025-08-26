@@ -7,6 +7,22 @@ export const JOB_ORDER = [
     'computer-vision-engineer', 'digital-marketer'
 ];
 
+export const EXPERIENCED_JOBS = [
+    {id: 'ai-engineer', name: '똑똑한 부엉이', title: 'AI 엔지니어', icon: '🦉'},
+    {id: 'design-expert', name: '영리한 여우', title: '디자인 전문가', icon: '🦊'},
+    {id: 'software-engineer', name: '꼼꼼한 코알라', title: '소프트웨어 엔지니어', icon: '🐨'},
+    {id: 'backend-developer', name: '든든한 곰', title: '백엔드 개발자', icon: '🐻'},
+    {id: 'frontend-developer', name: '정열적인 고양이', title: '프론트엔드 개발자', icon: '🐱'},
+    {id: 'data-engineer', name: '호기심 많은 사자', title: '데이터 엔지니어', icon: '🦁'},
+    {id: 'data-analyst', name: '기억력 좋은 코끼리', title: '데이터 분석가', icon: '🐘'},
+    {id: 'solution-architect', name: '실력 있는 독수리', title: '솔루션 아키텍트', icon: '🦅'},
+    {id: 'data-scientist', name: '분석가 펭귄', title: '데이터 과학자', icon: '🐧'},
+    {id: 'iot-developer', name: '빠른 다람쥐', title: 'IoT 개발자', icon: '🐿️'},
+    {id: 'product-manager', name: '손재주 좋은 너구리', title: '프로덕트 매니저', icon: '🦝'},
+    {id: 'ai-researcher', name: '배고픈 용', title: '기술연구 엔지니어', icon: '🐲'},
+    {id: 'computer-vision-engineer', name: '예리한 사슴', title: '컴퓨터비전 엔지니어', icon: '🦌'},
+];
+
 export const jobDetails: { [key: string]: JobDetail } = {
     'ai-engineer': {
         title: 'AI 엔지니어',

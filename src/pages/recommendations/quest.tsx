@@ -1,112 +1,25 @@
 'use client';
 
-import React, {useState, useMemo} from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import Link from 'next/link';
-import {Layout} from '@/layout/Layout';
-import {ProtectedRoute} from '@/components/common/ProtectedRoute';
-import {useRouter} from 'next/navigation';
+import { Layout } from '@/layout/Layout';
+import { ProtectedRoute } from '@/components/common/ProtectedRoute';
+import { useRouter } from 'next/navigation';
+import { EXPERIENCED_JOBS } from '@/lib/data';
 
-import {
-    DndContext,
-    closestCenter,
-    KeyboardSensor,
-    PointerSensor,
-    useSensor,
-    useSensors,
-    DragEndEvent,
-} from '@dnd-kit/core';
-import {
-    arrayMove,
-    SortableContext,
-    sortableKeyboardCoordinates,
-    useSortable,
-    verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import {CSS} from '@dnd-kit/utilities';
+// Quest Components
+import RequirementsQuest from '@/components/Quest/Backend/RequirementsQuest';
+import DatabaseDesignQuest from '@/components/Quest/Backend/DatabaseDesignQuest';
+import ApiDevelopmentQuest from '@/components/Quest/Backend/ApiDevelopmentQuest';
+import SecurityTestQuest from '@/components/Quest/Backend/SecurityTestQuest';
 
-const Icon = ({path, className = "w-5 h-5"}: { path: string, className?: string }) => (
+const Icon = ({ path, className = 'w-5 h-5' }: { path: string; className?: string }) => (
     <svg className={className} fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
         <path d={path}></path>
     </svg>
 );
 
-interface CodeBlock {
-    id: string;
-    title: string;
-    content: string;
-    category: 'API' | '보안' | 'DB';
-}
-
-const ALL_CODE_BLOCKS: CodeBlock[] = [
-    {id: 'block-1', title: '회원가입 API', content: "app.post('/api/signup', ...)", category: 'API'},
-    {id: 'block-2', title: '사용자 입력값 처리', content: "const { email, password } = req.body;", category: 'API'},
-    {id: 'block-7', title: '입력값 유효성 검사', content: "if (!email || !password) { ... }", category: 'API'},
-    {
-        id: 'block-3',
-        title: '비밀번호 암호화',
-        content: "const hashedPassword = await bcrypt.hash(password, 10);",
-        category: '보안'
-    },
-    {id: 'block-4', title: '새 사용자 생성', content: "const newUser = await db.user.create(...);", category: 'DB'},
-    {
-        id: 'block-5',
-        title: 'JWT 토큰 생성',
-        content: "const token = jwt.sign({ userId: newUser.id }, 'secret');",
-        category: '보안'
-    },
-    {id: 'block-6', title: '성공 응답 전송', content: "res.status(201).json({ token });", category: 'API'},
-];
-
-const CORRECT_SOLUTION_IDS = ['block-1', 'block-2', 'block-7', 'block-3', 'block-4', 'block-5', 'block-6'];
-
-function SortableCodeBlock({id, title, content, className, onRemove}: {
-    id: string,
-    title: string,
-    content: string,
-    className: string,
-    onRemove?: (id: string) => void
-}) {
-    const {
-        attributes,
-        listeners,
-        setNodeRef,
-        transform,
-        transition,
-    } = useSortable({id});
-
-    const style = {
-        transform: CSS.Transform.toString(transform),
-        transition,
-    };
-
-    return (
-        <div ref={setNodeRef} style={style} {...attributes} {...listeners}
-             className={`p-3 rounded-md shadow cursor-grab text-sm transition-colors ${className}`}>
-            <div className="flex items-start justify-between w-full">
-                <div className="flex-grow">
-                    <div className="text-xs text-gray-300 mb-1 flex items-center">
-                        <svg className="w-3 h-3 mr-1.5 flex-shrink-0" fill="none" stroke="currentColor"
-                             viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-                                  d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
-                        </svg>
-                        {title}
-                    </div>
-                    <div className="font-mono text-white pl-1">{content}</div>
-                </div>
-                {onRemove && (
-                    <button onClick={() => onRemove(id)}
-                            className="text-gray-400 hover:text-white font-bold text-xl p-1 -mt-2 -mr-1">
-                        ×
-                    </button>
-                )}
-            </div>
-        </div>
-    );
-}
-
-// ▼▼▼▼▼ QuestCompletionScreen 컴포넌트에 onFinishExperience 프롭 추가 ▼▼▼▼▼
-const QuestCompletionScreen = ({onFinishExperience}: { onFinishExperience: () => void }) => {
+const QuestCompletionScreen = ({ onFinishExperience }: { onFinishExperience: () => void }) => {
     const [rating, setRating] = useState(0);
     const [hoverRating, setHoverRating] = useState(0);
 
@@ -121,28 +34,27 @@ const QuestCompletionScreen = ({onFinishExperience}: { onFinishExperience: () =>
                         <svg
                             key={star}
                             className={`w-10 h-10 cursor-pointer transition-colors`}
-                            fill={(hoverRating >= star || rating >= star) ? '#FF4B4B' : '#E0E0E0'}
+                            fill={hoverRating >= star || rating >= star ? '#FF4B4B' : '#E0E0E0'}
                             viewBox="0 0 20 20"
                             onClick={() => setRating(star)}
                             onMouseEnter={() => setHoverRating(star)}
                             onMouseLeave={() => setHoverRating(0)}
                         >
-                            <path
-                                d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"/>
+                            <path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" />
                         </svg>
                     ))}
                 </div>
             </div>
             <div className="flex gap-6">
                 <Link href="/recommendations">
-                    <button
-                        className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 px-8 text-lg rounded-full shadow-lg transition-transform hover:scale-105">
+                    <button className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 px-8 text-lg rounded-full shadow-lg transition-transform hover:scale-105">
                         다른 캐릭터 체험하기
                     </button>
                 </Link>
-                {/* '체험 끝내기' 버튼 클릭 시 onFinishExperience 함수를 호출하도록 수정 */}
-                <button onClick={onFinishExperience}
-                        className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 text-lg rounded-full shadow-lg transition-transform hover:scale-105">
+                <button
+                    onClick={onFinishExperience}
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 text-lg rounded-full shadow-lg transition-transform hover:scale-105"
+                >
                     체험 끝내기
                 </button>
             </div>
@@ -150,27 +62,7 @@ const QuestCompletionScreen = ({onFinishExperience}: { onFinishExperience: () =>
     );
 };
 
-// ▼▼▼▼▼▼▼▼▼▼ [NEW] 가장 재밌었던 직무 선택을 위한 컴포넌트 추가 ▼▼▼▼▼▼▼▼▼▼
-
-// 체험했던 직무 데이터 (실제로는 API나 상위 상태에서 받아와야 합니다)
-const EXPERIENCED_JOBS = [
-    {id: 'ai-engineer', name: '똑똑한 부엉이', title: 'AI 엔지니어', icon: '🦉'},
-    {id: 'design-expert', name: '영리한 여우', title: '디자인 전문가', icon: '🦊'},
-    {id: 'software-engineer', name: '꼼꼼한 코알라', title: '소프트웨어 엔지니어', icon: '🐨'},
-    {id: 'backend-developer', name: '든든한 곰', title: '백엔드 개발자', icon: '🐻'},
-    {id: 'frontend-developer', name: '정열적인 고양이', title: '프론트엔드 개발자', icon: '🐱'},
-    {id: 'data-engineer', name: '호기심 많은 사자', title: '데이터 엔지니어', icon: '🦁'},
-    {id: 'data-analyst', name: '기억력 좋은 코끼리', title: '데이터 분석가', icon: '🐘'},
-    {id: 'solution-architect', name: '실력 있는 독수리', title: '솔루션 아키텍트', icon: '🦅'},
-    {id: 'data-scientist', name: '분석가 펭귄', title: '데이터 과학자', icon: '🐧'},
-    {id: 'iot-developer', name: '빠른 다람쥐', title: 'IoT 개발자', icon: '🐿️'},
-    {id: 'product-manager', name: '손재주 좋은 너구리', title: '프로덕트 매니저', icon: '🦝'},
-    {id: 'ai-researcher', name: '배고픈 용', title: '기술연구 엔지니어', icon: '🐲'},
-    {id: 'computer-vision-engineer', name: '예리한 사슴', title: '컴퓨터비전 엔지니어', icon: '🦌'},
-];
-
-
-const JobSelectionScreen = ({onSubmit}: { onSubmit: (jobTitle: string) => void }) => {
+const JobSelectionScreen = ({ onSubmit }: { onSubmit: (jobTitle: string) => void }) => {
     const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
 
     const handleSubmit = () => {
@@ -178,10 +70,8 @@ const JobSelectionScreen = ({onSubmit}: { onSubmit: (jobTitle: string) => void }
             alert('가장 재밌었던 직무를 선택해주세요.');
             return;
         }
-        const selectedJob = EXPERIENCED_JOBS.find(job => job.id === selectedJobId);
-        if (selectedJob) {
-            onSubmit(selectedJob.title); // 직무명(텍스트)을 상위 컴포넌트로 전달
-        }
+        const selectedJob = EXPERIENCED_JOBS.find((job) => job.id === selectedJobId);
+        if (selectedJob) onSubmit(selectedJob.title);
     };
 
     return (
@@ -194,13 +84,13 @@ const JobSelectionScreen = ({onSubmit}: { onSubmit: (jobTitle: string) => void }
                         <div
                             key={job.id}
                             onClick={() => setSelectedJobId(job.id)}
-                            className={`flex flex-col items-center justify-center p-4 rounded-xl cursor-pointer transition-all duration-300 transform hover:scale-105 ${selectedJobId === job.id ? 'bg-blue-500 shadow-lg ring-4 ring-blue-300' : 'bg-purple-400 hover:bg-purple-500 shadow-md'}`}
+                            className={`flex flex-col items-center justify-center p-4 rounded-xl cursor-pointer transition-all duration-300 transform hover:scale-105 ${
+                                selectedJobId === job.id ? 'bg-blue-500 shadow-lg ring-4 ring-blue-300' : 'bg-purple-400 hover:bg-purple-500 shadow-md'
+                            }`}
                         >
                             <div className="text-5xl mb-2">{job.icon}</div>
-                            <div
-                                className={`font-bold text-sm ${selectedJobId === job.id ? 'text-white' : 'text-purple-100'}`}>{job.name}</div>
-                            <div
-                                className={`text-xs ${selectedJobId === job.id ? 'text-blue-100' : 'text-purple-200'}`}>{job.title}</div>
+                            <div className={`font-bold text-sm ${selectedJobId === job.id ? 'text-white' : 'text-purple-100'}`}>{job.name}</div>
+                            <div className={`text-xs ${selectedJobId === job.id ? 'text-blue-100' : 'text-purple-200'}`}>{job.title}</div>
                         </div>
                     ))}
                 </div>
@@ -217,146 +107,182 @@ const JobSelectionScreen = ({onSubmit}: { onSubmit: (jobTitle: string) => void }
     );
 };
 
-// ▲▲▲▲▲▲▲▲▲▲ [NEW] 컴포넌트 추가 끝 ▲▲▲▲▲▲▲▲▲▲
-
-// 메인 퀘스트 페이지 컴포넌트
 export default function BackendQuestPage() {
-    const router = useRouter(); // 2. router 선언
-    const [blockLists, setBlockLists] = useState<{ available: CodeBlock[], solution: CodeBlock[] }>({
-        available: ALL_CODE_BLOCKS,
-        solution: [],
-    });
-    const [isQuestComplete, setIsQuestComplete] = useState(false);
-    const [executionResult, setExecutionResult] = useState<string[]>(['> 실행 대기 중...']);
-    const [isQuestFinished, setIsQuestFinished] = useState(false);
+    const router = useRouter();
 
-    // ▼▼▼ [NEW] 직무 선택 화면 전환을 위한 상태 추가 ▼▼▼
+    const [currentQuest, setCurrentQuest] = useState(0);
+    const [completedQuests, setCompletedQuests] = useState<boolean[]>([false, false, false, false]);
+    const [isQuestFinished, setIsQuestFinished] = useState(false);
     const [showJobSelection, setShowJobSelection] = useState(false);
 
-    const sensors = useSensors(
-        useSensor(PointerSensor),
-        useSensor(KeyboardSensor, {coordinateGetter: sortableKeyboardCoordinates})
+    // 공통 상태 관리
+    const [isQuestComplete, setIsQuestComplete] = useState(false);
+    const [executionResult, setExecutionResult] = useState<string[]>(['> 퀘스트를 시작하세요...']);
+
+    const questStages = useMemo(
+        () => [
+            { name: '요구사항', status: completedQuests[0] ? '완료됨' : currentQuest === 0 ? '진행중' : '대기중', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
+            { name: 'DB 설계', status: completedQuests[1] ? '완료됨' : currentQuest === 1 ? '진행중' : '대기중', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
+            { name: 'API 개발', status: completedQuests[2] ? '완료됨' : currentQuest === 2 ? '진행중' : '대기중', icon: 'M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L15.232 5.232z' },
+            { name: '보안 테스트', status: completedQuests[3] ? '완료됨' : currentQuest === 3 ? '진행중' : '대기중', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' }
+        ],
+        [completedQuests, currentQuest]
     );
 
-    // ... (기존 questStages, categorizedAvailableBlocks, handleDragEnd, handleRemoveBlock 등은 변경 없음)
-    const questStages = [
-        {name: "요구사항", status: "완료됨", icon: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"},
-        {name: "DB 설계", status: "완료됨", icon: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"},
-        {
-            name: "API 개발",
-            status: "진행중",
-            icon: "M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L15.232 5.232z"
-        },
-        {name: "보안 테스트", status: "대기중", icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"}
-    ];
+    // 각 퀘스트에서 호출되는 공통 실행 핸들러
+    const handleQuestExecute = useCallback((questIndex: number, data?: any) => {
+        let results: string[] = [];
+        let isSuccess = false;
 
-    const categorizedAvailableBlocks = useMemo(() => {
-        const categoryOrder = {'API': 1, '보안': 2, 'DB': 3};
-        const sortedAvailable = [...blockLists.available].sort((a, b) => categoryOrder[a.category] - categoryOrder[b.category]);
-
-        return {
-            'API 엔드포인트': sortedAvailable.filter(b => b.category === 'API'),
-            '인증 & 보안': sortedAvailable.filter(b => b.category === '보안'),
-            '데이터베이스': sortedAvailable.filter(b => b.category === 'DB'),
-        };
-    }, [blockLists.available]);
-
-    const handleDragEnd = (event: DragEndEvent) => {
-        const {active, over} = event;
-        if (!over) return;
-        const activeId = String(active.id);
-        setBlockLists(prev => {
-            const newAvailable = [...prev.available];
-            const newSolution = [...prev.solution];
-            let draggedItem: CodeBlock | undefined;
-            const activeContainer = newAvailable.some(item => item.id === activeId) ? 'available' : 'solution';
-
-            if (activeContainer === 'available') {
-                const index = newAvailable.findIndex(item => item.id === activeId);
-                draggedItem = newAvailable.splice(index, 1)[0];
-            } else {
-                const index = newSolution.findIndex(item => item.id === activeId);
-                draggedItem = newSolution.splice(index, 1)[0];
+        switch (questIndex) {
+            case 0: {
+                // 요구사항 선택 검증
+                const correct = ['회원가입/로그인 기능', '상품 장바구니 관리', '결제 시스템 연동', '관리자 상품 관리', '주문 내역 조회'];
+                isSuccess = Array.isArray(data) && correct.every((r) => data.includes(r)) && data.length === correct.length;
+                results = isSuccess
+                    ? ['> 요구사항 분석 중...', '✓ 핵심 기능을 모두 올바르게 식별했습니다.', '✓ 우선순위가 높은 요구사항을 정확히 파악했습니다.', '🎉 축하합니다! 요구사항 분석을 완료했습니다!']
+                    : [
+                        '> 요구사항 분석 중...',
+                        '⌧ 오류: 일부 핵심 요구사항이 누락되었거나 불필요한 항목이 포함되었습니다.',
+                        '💡 힌트: MVP(최소기능제품)에 꼭 필요한 기능들만 선택하세요. 디자인이나 부가기능은 나중에!',
+                        '💡 힌트: 사용자 관리, 상품 관리, 주문 처리가 핵심입니다.'
+                    ];
+                break;
             }
+            case 1: {
+                // DB 관계 검증
+                const correctConnections = [
+                    { from: 'users', to: 'orders' },
+                    { from: 'orders', to: 'order_items' },
+                    { from: 'products', to: 'order_items' }
+                ];
+                isSuccess =
+                    Array.isArray(data) &&
+                    correctConnections.every((c) => data.some((conn: any) => (conn.from === c.from && conn.to === c.to) || (conn.from === c.to && conn.to === c.from))) &&
+                    data.length === correctConnections.length;
 
-            if (!draggedItem) return prev;
-            const overId = String(over.id);
-            const overContainer = newAvailable.some(item => item.id === overId) || over.id === 'available' ? 'available' : 'solution';
-
-            if (overContainer === 'available') {
-                const overIndex = newAvailable.findIndex(item => item.id === overId);
-                newAvailable.splice(overIndex >= 0 ? overIndex : newAvailable.length, 0, draggedItem);
-            } else {
-                const overIndex = newSolution.findIndex(item => item.id === overId);
-                newSolution.splice(overIndex >= 0 ? overIndex : newSolution.length, 0, draggedItem);
+                results = isSuccess
+                    ? [
+                        '> 데이터베이스 관계 검증 중...',
+                        '✓ Users와 Orders 테이블이 올바르게 연결되었습니다.',
+                        '✓ Orders와 OrderItems 테이블이 올바르게 연결되었습니다.',
+                        '✓ Products와 OrderItems 테이블이 올바르게 연결되었습니다.',
+                        '🎉 축하합니다! 데이터베이스 설계를 완료했습니다!'
+                    ]
+                    : [
+                        '> 데이터베이스 관계 검증 중...',
+                        '⌧ 오류: 데이터베이스 관계가 올바르지 않습니다.',
+                        '💡 힌트: 사용자는 여러 주문을 할 수 있습니다.',
+                        '💡 힌트: 하나의 주문에는 여러 상품이 포함될 수 있습니다.',
+                        '💡 힌트: 외래키 관계를 확인하세요 (user_id, order_id, product_id).'
+                    ];
+                break;
             }
-            return {available: newAvailable, solution: newSolution};
-        });
-    };
-
-    const handleRemoveBlock = (blockId: string) => {
-        setBlockLists(prev => {
-            const newSolution = [...prev.solution];
-            const blockIndex = newSolution.findIndex(b => b.id === blockId);
-            if (blockIndex === -1) return prev;
-            const [removedBlock] = newSolution.splice(blockIndex, 1);
-            const newAvailable = [...prev.available, removedBlock];
-            return {available: newAvailable, solution: newSolution};
-        });
-    };
-
-    const handleCodeExecution = () => {
-        const currentSolutionIds = blockLists.solution.map(block => block.id);
-        if (JSON.stringify(currentSolutionIds) === JSON.stringify(CORRECT_SOLUTION_IDS)) {
-            setExecutionResult(['> 서버 시뮬레이터 실행...', '> Hong-Gildong님의 코드를 실행합니다...', '✓ 모든 블록이 올바른 순서로 조립되었습니다.', '✓ API 엔드포인트가 성공적으로 등록되었습니다.', '✓ JWT 토큰이 안전하게 생성되었습니다.', '🎉 축하합니다! 퀘스트를 성공적으로 완료했습니다!']);
-            setIsQuestComplete(true);
-        } else {
-            setExecutionResult(['> 서버 시뮬레이터 실행...', '❌ 오류: 블록의 순서가 맞지 않습니다.', '💡 힌트: API 요청을 받은 후, 데이터 유효성을 검사하고, 비밀번호를 암호화해야 합니다.']);
-            setIsQuestComplete(false);
+            case 2: {
+                // API 블록 순서 검증
+                const correctSolutionIds = ['block-1', 'block-2', 'block-7', 'block-3', 'block-4', 'block-5', 'block-6'];
+                isSuccess = Array.isArray(data) && JSON.stringify(data) === JSON.stringify(correctSolutionIds);
+                results = isSuccess
+                    ? [
+                        '> 서버 시뮬레이터 실행...',
+                        '> Hong-Gildong님의 코드를 실행합니다...',
+                        '✓ 모든 블록이 올바른 순서로 조립되었습니다.',
+                        '✓ API 엔드포인트가 성공적으로 등록되었습니다.',
+                        '✓ JWT 토큰이 안전하게 생성되었습니다.',
+                        '🎉 축하합니다! 퀘스트를 성공적으로 완료했습니다!'
+                    ]
+                    : ['> 서버 시뮬레이터 실행...', '⌧ 오류: 블록의 순서가 맞지 않습니다.', '💡 힌트: API 요청 → 유효성 검사 → 비밀번호 암호화 → DB 저장 → 토큰 발급 → 응답 순서를 확인하세요.'];
+                break;
+            }
+            case 3: {
+                // 보안 미니게임 점수
+                const score = data?.score ?? 0;
+                isSuccess = score >= 50;
+                results = [
+                    `> 보안 테스트 완료!`,
+                    `> 최종 점수: ${score}점`,
+                    isSuccess ? '✓ 보안 테스트를 성공적으로 통과했습니다!' : '⌧ 보안 테스트에서 더 많은 공격을 차단해야 합니다.',
+                    isSuccess ? '🎉 축하합니다! 보안 퀘스트를 완료했습니다!' : '💡 힌트: 공격 패턴을 빠르게 인식하고 차단하세요.'
+                ];
+                break;
+            }
         }
-    };
 
-    const handleReset = () => {
-        setBlockLists({available: ALL_CODE_BLOCKS, solution: []});
+        setExecutionResult(results);
+        setIsQuestComplete(isSuccess);
+    }, []);
+
+    const handleQuestReset = useCallback(() => {
         setIsQuestComplete(false);
-        setExecutionResult(['> 실행 대기 중...']);
-    };
+        setExecutionResult(['> 퀘스트를 시작하세요...']);
+    }, []);
 
-    const progressSteps = [
-        {name: "API 엔드포인트 설정", done: blockLists.solution.some(b => b.id === 'block-1')},
-        {name: "입력값 검증", done: blockLists.solution.some(b => b.id === 'block-7')},
-        {name: "인증 로직 구현", done: blockLists.solution.some(b => b.id === 'block-5')},
-        {name: "데이터베이스 연동", done: blockLists.solution.some(b => b.id === 'block-4')},
-        {name: "응답 처리", done: blockLists.solution.some(b => b.id === 'block-6')},
-    ];
+    const handleQuestComplete = useCallback(
+        (questIndex: number) => {
+            const next = [...completedQuests];
+            next[questIndex] = true;
+            setCompletedQuests(next);
+            setIsQuestComplete(false);
+            setExecutionResult(['> 퀘스트를 시작하세요...']);
 
-    // ▼▼▼ [NEW] 직무 선택 제출 처리 함수 ▼▼▼
-    const handleJobSelectionSubmit = (jobTitle: string) => {
-        console.log("선택된 가장 재밌었던 직무:", jobTitle);
-        // 여기에 딥러닝 모델에 input으로 전송하는 로직을 추가할 수 있습니다.
-        alert(`'${jobTitle}'을(를) 선택했습니다. 이제 잠재된 직무 성향을 알아보기 위한 질문을 시작하겠습니다.`);
+            if (questIndex < 3) setCurrentQuest(questIndex + 1);
+            else setIsQuestFinished(true);
+        },
+        [completedQuests]
+    );
 
-        // 3. 설문 페이지로 이동시키는 코드 추가
-        router.push('/recommendations/surveypage');
-    };
+    const handleStageClick = useCallback(
+        (index: number) => {
+            if (index <= currentQuest || completedQuests[index]) {
+                setCurrentQuest(index);
+                handleQuestReset();
+            }
+        },
+        [completedQuests, currentQuest, handleQuestReset]
+    );
+
+    const handleJobSelectionSubmit = useCallback(
+        (jobTitle: string) => {
+            alert(`'${jobTitle}'을(를) 선택했습니다. 이제 잠재된 직무 성향을 알아보기 위한 질문을 시작하겠습니다.`);
+            router.push('/recommendations/surveypage');
+        },
+        [router]
+    );
+
+    // 현재 스텝 렌더
+    const renderCurrentQuest = useCallback(() => {
+        const common = { onExecute: (data?: any) => handleQuestExecute(currentQuest, data), isComplete: isQuestComplete };
+
+        switch (currentQuest) {
+            case 0:
+                return <RequirementsQuest {...common} />;
+            case 1:
+                return <DatabaseDesignQuest {...common} />;
+            case 2:
+                return <ApiDevelopmentQuest {...common} />;
+            case 3:
+                return <SecurityTestQuest {...common} />;
+            default:
+                return <RequirementsQuest {...common} />;
+        }
+    }, [currentQuest, handleQuestExecute, isQuestComplete]);
 
     return (
         <ProtectedRoute requiresProfile={true}>
             <Layout>
-                <div className="bg-gray-100 p-4 sm:p-8 min-h-screen font-sans">
+                <div className="bg-gray-50 p-4 sm:p-8 min-h-screen font-sans">
                     <div className="max-w-7xl mx-auto">
-                        {/* ▼▼▼ 3단계 화면 전환 로직으로 수정 ▼▼▼ */}
                         {showJobSelection ? (
-                            <JobSelectionScreen onSubmit={handleJobSelectionSubmit}/>
+                            <JobSelectionScreen onSubmit={handleJobSelectionSubmit} />
                         ) : isQuestFinished ? (
-                            <QuestCompletionScreen onFinishExperience={() => setShowJobSelection(true)}/>
+                            <QuestCompletionScreen onFinishExperience={() => setShowJobSelection(true)} />
                         ) : (
                             <>
-                                {/* 헤더: 퀘스트 제목 및 유저 정보 */}
+                                {/* 헤더 */}
                                 <header className="flex justify-between items-center mb-6">
                                     <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 flex items-center gap-2">
-                                        직무 체험 퀘스트 <span
-                                        className="text-sm font-medium text-purple-700 bg-purple-100 px-3 py-1 rounded-full">백엔드 개발자</span>
+                                        직무 체험 퀘스트{' '}
+                                        <span className="text-sm font-medium text-purple-700 bg-purple-100 px-3 py-1 rounded-full">백엔드 개발자</span>
                                     </h1>
                                     <div className="flex items-center gap-3">
                                         <div className="bg-green-100 rounded-full p-1">
@@ -368,144 +294,96 @@ export default function BackendQuestPage() {
                                         </div>
                                     </div>
                                 </header>
-                                {/* ...기존 퀘스트 UI... */}
-                                {/* 소개 및 조언 박스 */}
-                                <div
-                                    className="bg-green-50 border-2 border-green-200 rounded-2xl p-6 mb-8 text-green-800">
+
+                                {/* 소개 박스 */}
+                                <div className="bg-green-50 border-2 border-green-200 rounded-2xl p-6 mb-8 text-green-800">
                                     <p className="font-bold text-xl mb-2">안녕! 백엔드의 든든한 곰이야! 👋</p>
-                                    <p className="text-base mb-4">오늘은 실제 서버 개발자가 하는 일을 체험해보자! 사용자 인증 API를 만드는 미션이야.</p>
+                                    <p className="text-base mb-4">오늘은 실제 서버 개발자가 하는 일을 체험해보자! 4단계 퀘스트를 완료해보세요.</p>
                                     <div className="bg-green-100 rounded-lg p-3 text-sm">
-                                        <span className="font-bold">💡 곰의 조언:</span> 백엔드는 눈에 안 보이지만 모든 걸 떠받치는 기둥이야. 안정성이
-                                        최우선!
+                                        <span className="font-bold">💡 곰의 조언:</span> 백엔드는 눈에 안 보이지만 모든 걸 떠받치는 기둥이야. 안정성이 최우선!
                                     </div>
                                 </div>
+
                                 {/* 퀘스트 진행 단계 */}
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                                    {questStages.map(stage => (
-                                        <div key={stage.name}
-                                             className={`p-4 rounded-xl border-2 ${stage.status === '진행중' ? 'bg-yellow-50 border-yellow-400' : 'bg-white'}`}>
+                                    {questStages.map((stage, index) => (
+                                        <div
+                                            key={stage.name}
+                                            onClick={() => handleStageClick(index)}
+                                            className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                                                stage.status === '진행중'
+                                                    ? 'bg-yellow-50 border-yellow-400'
+                                                    : stage.status === '완료됨'
+                                                        ? 'bg-green-50 border-green-400'
+                                                        : 'bg-white border-gray-200'
+                                            }`}
+                                        >
                                             <div className="flex items-center gap-3">
                                                 <div
-                                                    className={`p-2 rounded-full ${stage.status === '진행중' ? 'bg-yellow-100 text-yellow-600' : 'bg-gray-100 text-gray-500'}`}>
-                                                    <Icon path={stage.icon}/>
+                                                    className={`p-2 rounded-full ${
+                                                        stage.status === '진행중'
+                                                            ? 'bg-yellow-100 text-yellow-600'
+                                                            : stage.status === '완료됨'
+                                                                ? 'bg-green-100 text-green-600'
+                                                                : 'bg-gray-100 text-gray-500'
+                                                    }`}
+                                                >
+                                                    <Icon path={stage.icon} />
                                                 </div>
                                                 <div>
                                                     <p className="font-bold text-gray-800">{stage.name}</p>
-                                                    <p className={`text-sm font-medium ${stage.status === '완료됨' ? 'text-green-600' : stage.status === '진행중' ? 'text-yellow-600' : 'text-gray-500'}`}>{stage.status}</p>
+                                                    <p
+                                                        className={`text-sm font-medium ${
+                                                            stage.status === '완료됨' ? 'text-green-600' : stage.status === '진행중' ? 'text-yellow-600' : 'text-gray-500'
+                                                        }`}
+                                                    >
+                                                        {stage.status}
+                                                    </p>
                                                 </div>
                                             </div>
                                         </div>
                                     ))}
                                 </div>
 
-                                <DndContext sensors={sensors} collisionDetection={closestCenter}
-                                            onDragEnd={handleDragEnd}>
-                                    <div className="bg-white rounded-2xl shadow-lg p-6">
-                                        <div className="flex flex-col lg:flex-row gap-5">
-                                            {/* 왼쪽: 사용 가능 블록 목록 */}
-                                            <aside id="available"
-                                                   className="w-full lg:w-1/4 bg-gray-800 text-white rounded-lg p-4 space-y-4">
-                                                <SortableContext items={blockLists.available.map(b => b.id)}
-                                                                 strategy={verticalListSortingStrategy}>
-                                                    {Object.entries(categorizedAvailableBlocks).map(([category, blocks]) => (
-                                                        <div key={category}>
-                                                            <h3 className="font-bold text-gray-400 text-sm mb-2">{category}</h3>
-                                                            <div className="space-y-2">
-                                                                {blocks.map(block => {
-                                                                    const colors = {
-                                                                        API: 'bg-blue-600 hover:bg-blue-700',
-                                                                        보안: 'bg-purple-600 hover:bg-purple-700',
-                                                                        DB: 'bg-green-600 hover:bg-green-700'
-                                                                    };
-                                                                    return <SortableCodeBlock key={block.id}
-                                                                                              id={block.id}
-                                                                                              title={block.title}
-                                                                                              content={block.content}
-                                                                                              className={`${colors[block.category]}`}/>;
-                                                                })}
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </SortableContext>
-                                            </aside>
+                                {/* 공통 퀘스트 레이아웃 */}
+                                <div className="bg-white rounded-2xl shadow-lg p-6">
+                                    <div className="flex flex-col lg:flex-row gap-6">
+                                        {/* 왼쪽+중앙: 퀘스트 게임 영역 */}
+                                        <div className="w-full lg:w-2/3">{renderCurrentQuest()}</div>
 
-                                            {/* 중앙: 조립 영역 및 제어 버튼 */}
-                                            <div className="w-full lg:w-1/2 flex flex-col">
-                                                <main
-                                                    className="bg-gray-900 rounded-xl shadow-inner flex-col flex-grow">
-                                                    <div
-                                                        className="flex-shrink-0 p-3 text-sm font-semibold text-gray-300 border-b border-gray-700">회원가입
-                                                        API
-                                                    </div>
-                                                    <div id="solution"
-                                                         className="p-4 space-y-2 flex-grow min-h-[350px]">
-                                                        <SortableContext items={blockLists.solution.map(b => b.id)}
-                                                                         strategy={verticalListSortingStrategy}>
-                                                            {blockLists.solution.map(block => (
-                                                                <SortableCodeBlock key={block.id} id={block.id}
-                                                                                   title={block.title}
-                                                                                   content={block.content}
-                                                                                   className="bg-gray-700"
-                                                                                   onRemove={handleRemoveBlock}/>
-                                                            ))}
-                                                        </SortableContext>
-                                                        {blockLists.solution.length === 0 && (
-                                                            <div
-                                                                className="flex items-center justify-center h-full text-gray-500">
-                                                                <p>왼쪽 블록을 이곳으로 드래그하세요.</p>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </main>
-                                                <div className="flex justify-center items-center gap-4 pt-4">
-                                                    <button onClick={handleCodeExecution}
-                                                            className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded-lg text-sm">코드
-                                                        실행
-                                                    </button>
-                                                    <button onClick={handleReset}
-                                                            className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-6 rounded-lg text-sm">초기화
-                                                    </button>
-                                                </div>
+                                        {/* 오른쪽: 공통 실행 결과 */}
+                                        <div className="w-full lg:w-1/3">
+                                            <div className="bg-gray-900 rounded-xl text-white text-xs p-4 font-mono h-[400px] overflow-y-auto">
+                                                <h3 className="font-bold text-gray-400 text-sm mb-2">실행 결과</h3>
+                                                {executionResult.map((line, index) => (
+                                                    <p
+                                                        key={index}
+                                                        className={`${line.includes('🎉') || line.includes('✓') ? 'text-green-400' : ''} ${
+                                                            line.includes('⌧') || line.includes('💡') ? 'text-yellow-400' : ''
+                                                        }`}
+                                                    >
+                                                        {line}
+                                                    </p>
+                                                ))}
                                             </div>
-
-                                            {/* 오른쪽: 실행 결과 및 진행상황 */}
-                                            <aside className="w-full lg:w-1/4">
-                                                <div
-                                                    className="bg-gray-900 rounded-xl text-white text-xs p-4 font-mono h-[250px] overflow-y-auto">
-                                                    <h3 className="font-bold text-gray-400 text-sm mb-2">실행 결과</h3>
-                                                    {executionResult.map((line, index) => (
-                                                        <p key={index}
-                                                           className={`${line.includes('🎉') || line.includes('✓') ? 'text-green-400' : ''} ${line.includes('❌') || line.includes('💡') ? 'text-yellow-400' : ''}`}>{line}</p>
-                                                    ))}
-                                                </div>
-                                                <div className="mt-4 bg-white rounded-lg p-4 border">
-                                                    <h3 className="font-bold text-sm mb-3 text-gray-700">진행상황</h3>
-                                                    <ul className="space-y-2 text-sm text-gray-600">
-                                                        {progressSteps.map(step => (
-                                                            <li key={step.name}
-                                                                className={`flex items-center ${step.done ? 'text-gray-800 font-semibold' : 'text-gray-500'}`}>
-                                                                <span
-                                                                    className={`w-4 h-4 mr-2 rounded-full flex items-center justify-center ${step.done ? 'bg-green-500 text-white' : 'bg-gray-300'}`}>
-                                                                    {step.done && '✓'}
-                                                                </span>
-                                                                {step.name}
-                                                            </li>
-                                                        ))}
-                                                    </ul>
-                                                </div>
-                                            </aside>
                                         </div>
                                     </div>
-                                </DndContext>
-                                {/* 하단 완료 버튼 */}
-                                <div
-                                    className={`flex justify-end mt-6 transition-opacity duration-500 ${isQuestComplete ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-                                    {isQuestComplete && (
-                                        <button onClick={() => setIsQuestFinished(true)}
-                                                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 text-lg rounded-full shadow-lg transition-transform hover:scale-105">
-                                            퀘스트 완료하기
-                                        </button>
-                                    )}
+
+                                    {/* 공통 완료 버튼 */}
+                                    <div
+                                        className={`flex justify-center mt-10 transition-opacity duration-500 ${
+                                            isQuestComplete ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                                        }`}
+                                    >
+                                        {isQuestComplete && (
+                                            <button
+                                                onClick={() => handleQuestComplete(currentQuest)}
+                                                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 text-lg rounded-full shadow-lg transition-transform hover:scale-105"
+                                            >
+                                                퀘스트 완료하기
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                             </>
                         )}
