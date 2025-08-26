@@ -3,11 +3,13 @@
 import React, {useState} from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import {useRouter} from 'next/navigation';
 import {useAuth} from '@/hooks/useAuth';
 
 export const Header: React.FC = () => {
     const {isLoggedIn, user, logout, isLoading} = useAuth();
     const [showUserMenu, setShowUserMenu] = useState(false);
+    const router = useRouter();
 
     const handleLogout = async () => {
         await logout();
@@ -32,24 +34,24 @@ export const Header: React.FC = () => {
 
                     {/* 네비게이션 메뉴 - 항상 표시 */}
                     <nav className="flex space-x-8">
-                        <Link
-                            href="/recommendations"
+                        <button
+                            onClick={() => router.push('/recommendations')}
                             className="text-gray-600 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors"
                         >
                             직무 추천
-                        </Link>
+                        </button>
                         <Link
                             href="/jobs"
                             className="text-gray-600 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors"
                         >
                             직무 리스트
                         </Link>
-                        <Link
-                            href="/roadmaps"
+                        <button
+                            onClick={() => router.push('/roadmaps')}
                             className="text-gray-600 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors"
                         >
                             직무 로드맵
-                        </Link>
+                        </button>
                     </nav>
 
                     {/* 사용자 영역 */}

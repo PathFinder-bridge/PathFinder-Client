@@ -2,19 +2,9 @@
 
 import React from 'react';
 import {useRouter} from 'next/navigation';
-import {useAuth} from '@/hooks/useAuth';
 
 export const HeroSection: React.FC = () => {
     const router = useRouter();
-    const {isLoggedIn} = useAuth();
-
-    const handleStartRecommendation = () => {
-        if (isLoggedIn) {
-            router.push('/recommendations');
-        } else {
-            router.push('/signup');
-        }
-    };
 
     return (
         <section
@@ -49,7 +39,7 @@ export const HeroSection: React.FC = () => {
                         {/* CTA Button */}
                         <div className="mb-8">
                             <button
-                                onClick={handleStartRecommendation}
+                                onClick={() => router.push('/recommendations')}
                                 className="group inline-flex items-center px-8 py-4 bg-slate-700 hover:bg-slate-800 text-white text-lg font-semibold rounded-full transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105"
                             >
                                 직무 추천 바로가기

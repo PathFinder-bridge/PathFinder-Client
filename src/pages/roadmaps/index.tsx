@@ -2,7 +2,8 @@
 
 import React, {useState, useEffect, useRef, useCallback} from 'react';
 import {useSearchParams} from 'next/navigation';
-import { Layout } from '@/layout/Layout';
+import {Layout} from '@/layout/Layout';
+import AuthGuard from '@/components/common/AuthGuard';
 
 // 타입 정의
 interface Job {
@@ -95,7 +96,7 @@ export default function JobRoadmapPage() {
         }, 100);
     }, []);
 
-    // 페이지 로드 시 URL에서 직무 목록을 가져와 초기화
+    // URL에서 직무 목록을 가져와 초기화
     useEffect(() => {
         const jobsParam = searchParams.get('jobs');
         if (jobsParam) {
@@ -112,101 +113,99 @@ export default function JobRoadmapPage() {
         }
     }, [searchParams, handleJobCardClick]);
 
-    // 사용자 메시지 전송 처리
-    const handleSendMessage = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!userInput.trim()) return;
-
-        const userText = userInput;
-        addMessage('user', userText);
-        setUserInput('');
-        scrollToBottom();
-
-        addMessage('bot', '', true);
-        const roadmap = await fetchGptResponse(`"${userText}" 요청에 대한 직무 학습 로드맵을 단계별로 알려줘. 초보자도 이해하기 쉽게 설명해줘.`);
-        updateLastMessage(roadmap);
-        scrollToBottom();
-    };
-
     return (
-        <Layout showFooter={false}>
-            {/* 전체화면 채팅 인터페이스 */}
-            <div className="flex h-[calc(100vh-64px)] bg-white">
-                {/* 왼쪽: 추천 직무 카드 목록 */}
-                <aside className="w-1/4 p-6 bg-gray-50 border-r border-gray-200 overflow-y-overlay [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                    <div className="space-y-4">
-                        {recommendedJobs.map(job => (
-                            <div
-                                key={job.id}
-                                onClick={() => handleJobCardClick(job)}
-                                className={`p-4 border rounded-lg cursor-pointer transition-all ${
-                                    selectedJob?.id === job.id
-                                        ? 'bg-white border-blue-500 shadow-md'
-                                        : 'bg-gray-100 border-transparent hover:bg-white'
-                                }`}
-                            >
-                                <h3 className="font-bold text-gray-800">{job.title}</h3>
-                                <p className="text-sm text-orange-500 font-semibold">{job.matchRate}% 일치</p>
-                                <p className="text-xs text-gray-500 mt-2 line-clamp-2">{job.description}</p>
-                            </div>
-                        ))}
-                    </div>
-                </aside>
-
-                {/* 중앙: 챗봇 인터페이스 */}
-                <main className="flex-1 flex flex-col px-28 p-6">
-                    <div className="flex-1 overflow-y-scroll space-y-6 pr-4" style={{scrollbarWidth: 'none', msOverflowStyle: 'none'}}>
-                        {messages.map(msg => (
-                            <div key={msg.id}
-                                 className={`flex items-end gap-3 ${msg.sender === 'user' ? 'justify-end' : ''}`}>
-                                {msg.sender === 'bot' && (
-                                    <div className="w-8 h-8 flex-shrink-0 bg-blue-100 rounded-full text-lg flex items-center justify-center">
-                                        🤖
-                                    </div>
-                                )}
-                                <div className={`max-w-xl p-4 rounded-2xl ${
-                                    msg.sender === 'bot'
-                                        ? 'bg-gray-100 text-gray-800'
-                                        : 'bg-blue-600 text-white'
-                                }`}>
-                                    {msg.isLoading ? (
-                                        <div className="flex items-center gap-2">
-                                            <span className="w-2 h-2 bg-gray-400 rounded-full animate-pulse"></span>
-                                            <span className="w-2 h-2 bg-gray-400 rounded-full animate-pulse delay-150"></span>
-                                            <span className="w-2 h-2 bg-gray-400 rounded-full animate-pulse delay-300"></span>
-                                        </div>
-                                    ) : (
-                                        <p className="whitespace-pre-wrap"
-                                           dangerouslySetInnerHTML={{
-                                               __html: msg.text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                                           }}
-                                        />
-                                    )}
+        <AuthGuard>
+            <Layout showFooter={false}>
+                {/* 전체화면 채팅 인터페이스 */}
+                <div className="flex h-[calc(100vh-64px)] bg-white">
+                    {/* 왼쪽: 추천 직무 카드 목록 */}
+                    <aside className="w-1/4 p-6 bg-gray-50 border-r border-gray-200 overflow-y-overlay [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                        <div className="space-y-4">
+                            {recommendedJobs.map(job => (
+                                <div
+                                    key={job.id}
+                                    onClick={() => handleJobCardClick(job)}
+                                    className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                                        selectedJob?.id === job.id
+                                            ? 'bg-white border-blue-500 shadow-md'
+                                            : 'bg-gray-100 border-transparent hover:bg-white'
+                                    }`}
+                                >
+                                    <h3 className="font-bold text-gray-800">{job.title}</h3>
+                                    <p className="text-sm text-orange-500 font-semibold">{job.matchRate}% 일치</p>
+                                    <p className="text-xs text-gray-500 mt-2 line-clamp-2">{job.description}</p>
                                 </div>
-                            </div>
-                        ))}
-                        <div ref={chatEndRef}/>
-                    </div>
-
-                    <form onSubmit={handleSendMessage} className="mt-6">
-                        <div className="relative">
-                            <input
-                                type="text"
-                                value={userInput}
-                                onChange={(e) => setUserInput(e.target.value)}
-                                placeholder="무엇이든 물어보세요"
-                                className="w-full pl-4 pr-12 py-4 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            />
-                            <button
-                                type="submit"
-                                className="absolute right-3 top-1/2 -translate-y-1/2 bg-blue-600 text-white rounded-full w-10 h-10 flex items-center justify-center hover:bg-blue-700"
-                            >
-                                →
-                            </button>
+                            ))}
                         </div>
-                    </form>
-                </main>
-            </div>
-        </Layout>
+                    </aside>
+
+                    {/* 중앙: 챗봇 인터페이스 */}
+                    <main className="flex-1 flex flex-col px-28 p-6">
+                        <div className="flex-1 overflow-y-scroll space-y-6 pr-4"
+                             style={{scrollbarWidth: 'none', msOverflowStyle: 'none'}}>
+                            {messages.map(msg => (
+                                <div key={msg.id}
+                                     className={`flex items-end gap-3 ${msg.sender === 'user' ? 'justify-end' : ''}`}>
+                                    {msg.sender === 'bot' && (
+                                        <div className="w-8 h-8 flex-shrink-0 bg-blue-100 rounded-full text-lg flex items-center justify-center">
+                                            🤖
+                                        </div>
+                                    )}
+                                    <div className={`max-w-xl p-4 rounded-2xl ${
+                                            msg.sender === 'bot' ? 'bg-gray-100 text-gray-800' : 'bg-blue-600 text-white'
+                                        }`}>
+                                        {msg.isLoading ? (
+                                            <div className="flex items-center gap-2">
+                                                <span className="w-2 h-2 bg-gray-400 rounded-full animate-pulse"></span>
+                                                <span className="w-2 h-2 bg-gray-400 rounded-full animate-pulse delay-150"></span>
+                                                <span className="w-2 h-2 bg-gray-400 rounded-full animate-pulse delay-300"></span>
+                                            </div>
+                                        ) : (
+                                            <p className="whitespace-pre-wrap"
+                                               dangerouslySetInnerHTML={{
+                                                    __html: msg.text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'),
+                                                }}
+                                            />
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                            <div ref={chatEndRef}/>
+                        </div>
+
+                        <form onSubmit={async (e) => {
+                            e.preventDefault();
+                            if (!userInput.trim()) return;
+
+                            const userText = userInput;
+                            addMessage('user', userText);
+                            setUserInput('');
+                            scrollToBottom();
+
+                            addMessage('bot', '', true);
+                            const roadmap = await fetchGptResponse(`"${userText}" 요청에 대한 직무 학습 로드맵을 단계별로 알려줘. 초보자도 이해하기 쉽게 설명해줘.`);
+                            updateLastMessage(roadmap);
+                            scrollToBottom();
+                        }} className="mt-6">
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    value={userInput}
+                                    onChange={(e) => setUserInput(e.target.value)}
+                                    placeholder="무엇이든 물어보세요"
+                                    className="w-full pl-4 pr-12 py-4 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+                                <button
+                                    type="submit"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 bg-blue-600 text-white rounded-full w-10 h-10 flex items-center justify-center hover:bg-blue-700"
+                                >
+                                    →
+                                </button>
+                            </div>
+                        </form>
+                    </main>
+                </div>
+            </Layout>
+        </AuthGuard>
     );
 }
