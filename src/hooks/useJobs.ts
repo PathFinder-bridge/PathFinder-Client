@@ -9,19 +9,33 @@ export const useJobs = () => {
     const [error, setError] = useState<string | null>(null);
     const [lastUpdated, setLastUpdated] = useState<string | null>(null);
 
+    const parseEnvelope = (res: any) => {
+        const env = (res && typeof res === 'object' && 'data' in res) ? res.data : res;
+        return env || null;
+    };
+
     // 직무 목록 로드
     const loadJobs = useCallback(async () => {
         try {
             setIsLoading(true);
             setError(null);
 
-            const response = await jobsApi.getAllJobs();
-            setJobData(response.data);
-            setLastUpdated(response.timeStamp);
+            const res = await jobsApi.getAllJobs();
+            const envelope = parseEnvelope(res);
+            if (!envelope) throw new Error('Invalid jobs API response');
 
-            console.log('직무 데이터 로드 완료:', response.data);
+            const payload = envelope.data ?? envelope;
+
+            setJobData(payload as JobListResponse);
+            setLastUpdated(payload?.lastUpdated ?? envelope?.timeStamp ?? null);
+
+            console.log('직무 목록 조회 성공:', {
+                categories: payload?.categories,
+                totalJobs: payload?.totalJobs,
+                lastUpdated: payload?.lastUpdated
+            });
         } catch (err: any) {
-            const errorMessage = err.message || '직무 목록을 불러오는데 실패했습니다.';
+            const errorMessage = err?.message || '직무 목록을 불러오는데 실패했습니다.';
             setError(errorMessage);
             console.error('직무 데이터 로드 실패:', err);
         } finally {
@@ -37,7 +51,6 @@ export const useJobs = () => {
     // 특정 카테고리의 직무 가져오기
     const getJobsByCategory = useCallback((categoryName: string): JobResponse[] => {
         if (!jobData) return [];
-
         const category = jobData.categories.find(cat => cat.name === categoryName);
         return category?.jobs || [];
     }, [jobData]);
@@ -45,23 +58,19 @@ export const useJobs = () => {
     // 모든 직무를 평면 배열로 가져오기
     const getAllJobsFlat = useCallback((): JobResponse[] => {
         if (!jobData) return [];
-
         return jobData.categories.flatMap(category => category.jobs);
     }, [jobData]);
 
     // 직무 검색
     const searchJobs = useCallback((keyword: string): JobResponse[] => {
         const allJobs = getAllJobsFlat();
+        if (!keyword.trim()) return allJobs;
 
-        if (!keyword.trim()) {
-            return allJobs;
-        }
-
-        const searchTerm = keyword.toLowerCase();
+        const q = keyword.toLowerCase();
         return allJobs.filter(job =>
-            job.title.toLowerCase().includes(searchTerm) ||
-            job.description.toLowerCase().includes(searchTerm) ||
-            job.skills.some(skill => skill.toLowerCase().includes(searchTerm))
+            job.title.toLowerCase().includes(q) ||
+            job.description.toLowerCase().includes(q) ||
+            job.skills.some(skill => skill.toLowerCase().includes(q))
         );
     }, [getAllJobsFlat]);
 
@@ -91,10 +100,10 @@ export const useJobs = () => {
         refreshJobs,
         getJobsByCategory,
         getAllJobsFlat,
-        searchJobs, // 클라이언트 사이드 검색 함수
+        searchJobs,
 
         // 편의 속성들
         hasData: !!jobData,
-        isEmpty: jobData?.totalJobs === 0,
+        isEmpty: (jobData?.totalJobs ?? 0) === 0,
     };
 };
