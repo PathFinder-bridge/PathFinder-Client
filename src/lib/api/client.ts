@@ -76,7 +76,9 @@ apiClient.interceptors.response.use(
         // 로그인 관련 요청이면 에러를 그대로 전달 (자동 리다이렉트 안함)
         if (originalRequest.url?.includes('/auth/login') ||
             originalRequest.url?.includes('/auth/signup') ||
-            originalRequest.url?.includes('/auth/verify')) {
+            originalRequest.url?.includes('/auth/verify-email') ||  // 추가
+            originalRequest.url?.includes('/auth/verify-code') ||   // 추가
+            originalRequest.url?.includes('/auth/check-email')) {   // 추가
             console.log('로그인/회원가입 관련 요청 에러 - 자동 처리 건너뛰기');
             return Promise.reject(error);
         }

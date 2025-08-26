@@ -20,11 +20,11 @@ interface SignUpFormData {
 }
 
 interface FormState {
-    emailDuplicateChecked: boolean;    // 중복 확인 완료
-    emailAvailable: boolean;           // 이메일 사용 가능
-    verificationCodeSent: boolean;     // 인증 코드 발송 완료
-    verificationCompleted: boolean;    // 인증 완료
-    verificationToken: string;         // 인증 토큰
+    emailDuplicateChecked: boolean;
+    emailAvailable: boolean;
+    verificationCodeSent: boolean;
+    verificationCompleted: boolean;
+    verificationToken: string;
 }
 
 const validationConfig = {
@@ -70,7 +70,6 @@ export default function SignUpPage() {
         signUp: false
     });
 
-    // Alert 상태 관리
     const [alert, setAlert] = useState<{
         type: 'error' | 'success';
         message: string;
@@ -80,7 +79,6 @@ export default function SignUpPage() {
 
     const {errors, validateSingleField, clearFieldError} = useFormValidation(validationConfig);
 
-    // Alert 관리 함수들
     const showError = (message: string) => {
         setAlert({type: 'error', message});
     };
@@ -113,7 +111,6 @@ export default function SignUpPage() {
             }
         }
 
-        // 이메일이 변경되면 모든 관련 상태 초기화
         if (field === 'email') {
             setFormState({
                 emailDuplicateChecked: false,
@@ -135,12 +132,10 @@ export default function SignUpPage() {
 
         setIsLoading(prev => ({...prev, checkDuplicate: true}));
 
-        try {
-            console.log('이메일 중복 확인 시작:', formData.email);
-            const response = await authApi.checkEmailDuplicate(formData.email);
-            console.log('중복 확인 응답:', response);
+        const result = await authApi.checkEmailDuplicate(formData.email);
 
-            if (response.data) {
+        if (result.success && result.data !== undefined) {
+            if (result.data) {
                 // 사용 가능한 이메일
                 setFormState(prev => ({
                     ...prev,
@@ -157,36 +152,30 @@ export default function SignUpPage() {
                 }));
                 showError('이미 사용 중인 이메일입니다. 다른 이메일을 사용해주세요.');
             }
-        } catch (err) {
-            console.error('이메일 중복 확인 실패:', err);
-            showError(err instanceof Error ? err.message : '이메일 중복 확인에 실패했습니다.');
-        } finally {
-            setIsLoading(prev => ({...prev, checkDuplicate: false}));
+        } else {
+            showError(result.error || '이메일 중복 확인에 실패했습니다.');
         }
+
+        setIsLoading(prev => ({...prev, checkDuplicate: false}));
     };
 
     // 2단계: 인증 코드 발송
     const handleSendVerificationCode = async () => {
         setIsLoading(prev => ({...prev, sendCode: true}));
 
-        try {
-            console.log('인증 코드 발송 시작:', formData.email);
-            const response = await authApi.verifyEmail({email: formData.email});
-            console.log('인증 코드 발송 응답:', response);
+        const result = await authApi.verifyEmail({email: formData.email});
 
-            if (response.data) {
-                setFormState(prev => ({
-                    ...prev,
-                    verificationCodeSent: true
-                }));
-                showSuccess(`인증 코드가 ${formData.email}로 발송되었습니다. 이메일을 확인해주세요.`);
-            }
-        } catch (err) {
-            console.error('인증 코드 발송 실패:', err);
-            showError(err instanceof Error ? err.message : '인증 코드 발송에 실패했습니다.');
-        } finally {
-            setIsLoading(prev => ({...prev, sendCode: false}));
+        if (result.success) {
+            setFormState(prev => ({
+                ...prev,
+                verificationCodeSent: true
+            }));
+            showSuccess(`인증 코드가 ${formData.email}로 발송되었습니다. 이메일을 확인해주세요.`);
+        } else {
+            showError(result.error || '인증 코드 발송에 실패했습니다.');
         }
+
+        setIsLoading(prev => ({...prev, sendCode: false}));
     };
 
     // 3단계: 인증 코드 확인
@@ -198,28 +187,27 @@ export default function SignUpPage() {
 
         setIsLoading(prev => ({...prev, verifyCode: true}));
 
-        try {
-            console.log('인증번호 확인 시작:', formData.verificationCode);
-            const response = await authApi.verifyCode({
-                email: formData.email,
-                code: formData.verificationCode
-            });
-            console.log('인증번호 확인 응답:', response);
+        const result = await authApi.verifyCode({
+            email: formData.email,
+            code: formData.verificationCode
+        });
 
-            if (response.data && response.data.verified) {
+        if (result.success && result.data) {
+            if (result.data.verified) {
                 setFormState(prev => ({
                     ...prev,
                     verificationCompleted: true,
-                    verificationToken: response.data.verificationToken
+                    verificationToken: result.data!.verificationToken
                 }));
                 showSuccess('이메일 인증이 완료되었습니다. 나머지 정보를 입력해주세요.');
+            } else {
+                showError('인증 코드가 올바르지 않습니다. 다시 확인해주세요.');
             }
-        } catch (err) {
-            console.error('인증번호 확인 실패:', err);
-            showError(err instanceof Error ? err.message : '인증번호 확인에 실패했습니다.');
-        } finally {
-            setIsLoading(prev => ({...prev, verifyCode: false}));
+        } else {
+            showError(result.error || '인증번호 확인에 실패했습니다.');
         }
+
+        setIsLoading(prev => ({...prev, verifyCode: false}));
     };
 
     // 4단계: 회원가입
@@ -257,26 +245,22 @@ export default function SignUpPage() {
 
         setIsLoading(prev => ({...prev, signUp: true}));
 
-        try {
-            console.log('회원가입 시작');
-            const response = await authApi.signUp({
-                verificationToken: formState.verificationToken,
-                password: formData.password,
-                passwordConfirm: formData.passwordConfirm
-            });
+        const result = await authApi.signUp({
+            verificationToken: formState.verificationToken,
+            password: formData.password,
+            passwordConfirm: formData.passwordConfirm
+        });
 
-            if (response.data) {
-                showSuccess('회원가입이 완료되었습니다. 로그인 페이지로 이동합니다.');
-                setTimeout(() => {
-                    router.push('/login');
-                }, 2000);
-            }
-        } catch (err) {
-            console.error('회원가입 실패:', err);
-            showError(err instanceof Error ? err.message : '회원가입에 실패했습니다.');
-        } finally {
-            setIsLoading(prev => ({...prev, signUp: false}));
+        if (result.success) {
+            showSuccess('회원가입이 완료되었습니다. 로그인 페이지로 이동합니다.');
+            setTimeout(() => {
+                router.push('/login');
+            }, 2000);
+        } else {
+            showError(result.error || '회원가입에 실패했습니다.');
         }
+
+        setIsLoading(prev => ({...prev, signUp: false}));
     };
 
     // 버튼 텍스트 및 상태 결정
@@ -299,8 +283,7 @@ export default function SignUpPage() {
             return {
                 text: '발송완료',
                 disabled: true,
-                onClick: () => {
-                },
+                onClick: () => {},
                 loading: false
             };
         }
@@ -331,7 +314,6 @@ export default function SignUpPage() {
                             회원가입
                         </h2>
 
-                        {/* Alert 컴포넌트 사용 */}
                         {alert && (
                             <Alert
                                 type={alert.type}
@@ -374,8 +356,7 @@ export default function SignUpPage() {
                                 >
                                     {emailButtonState.loading ? (
                                         <div className="flex items-center">
-                                            <div
-                                                className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                                             처리 중...
                                         </div>
                                     ) : (
@@ -384,7 +365,7 @@ export default function SignUpPage() {
                                 </button>
                             </div>
 
-                            {/* 인증번호 입력 - 인증코드가 발송된 후에만 표시 */}
+                            {/* 인증번호 입력 */}
                             {formState.verificationCodeSent && (
                                 <div className="flex space-x-2 items-start">
                                     <div className="flex-1">
@@ -406,8 +387,7 @@ export default function SignUpPage() {
                                     >
                                         {isLoading.verifyCode ? (
                                             <div className="flex items-center">
-                                                <div
-                                                    className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                                                 확인 중...
                                             </div>
                                         ) : formState.verificationCompleted ? (
@@ -463,8 +443,7 @@ export default function SignUpPage() {
                             >
                                 {isLoading.signUp ? (
                                     <div className="flex items-center">
-                                        <div
-                                            className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                                         가입 중...
                                     </div>
                                 ) : (

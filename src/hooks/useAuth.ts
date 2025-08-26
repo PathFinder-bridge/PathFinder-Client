@@ -23,12 +23,12 @@ export const useAuth = () => {
     const checkProfileStatus = useCallback(async () => {
         if (!isLoggedIn) return;
 
-        try {
-            const response = await userApi.getProfileStatus();
-            setProfileStatus(response.data);
-            return response.data;
-        } catch (error) {
-            console.error('프로필 상태 확인 실패:', error);
+        const result = await userApi.getProfileStatus();
+        if (result.success && result.data) {
+            setProfileStatus(result.data);
+            return result.data;
+        } else {
+            console.error('프로필 상태 확인 실패:', result.error);
             return null;
         }
     }, [isLoggedIn]);
@@ -37,12 +37,12 @@ export const useAuth = () => {
     const loadUserProfile = useCallback(async () => {
         if (!isLoggedIn) return;
 
-        try {
-            const response = await userApi.getUserProfile();
-            setUserProfile(response.data);
-            return response.data;
-        } catch (error) {
-            console.error('프로필 정보 로드 실패:', error);
+        const result = await userApi.getUserProfile();
+        if (result.success && result.data) {
+            setUserProfile(result.data);
+            return result.data;
+        } else {
+            console.error('프로필 정보 로드 실패:', result.error);
             return null;
         }
     }, [isLoggedIn]);
@@ -88,18 +88,19 @@ export const useAuth = () => {
 
     // 로그아웃
     const logout = async () => {
-        try {
-            await authApi.logout();
-        } catch (error) {
-            console.error('로그아웃 요청 실패:', error);
-        } finally {
-            tokenManager.clearTokens();
-            setUser(null);
-            setUserProfile(null);
-            setProfileStatus(null);
-            setIsLoggedIn(false);
-            router.push('/');
+        // API 호출 결과와 상관없이 클라이언트 상태는 정리
+        const result = await authApi.logout();
+        if (!result.success) {
+            console.error('로그아웃 API 실패:', result.error);
         }
+
+        // 상태 정리
+        tokenManager.clearTokens();
+        setUser(null);
+        setUserProfile(null);
+        setProfileStatus(null);
+        setIsLoggedIn(false);
+        router.push('/');
     };
 
     // 로그인 성공 처리

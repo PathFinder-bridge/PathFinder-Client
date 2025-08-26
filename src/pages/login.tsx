@@ -81,69 +81,31 @@ export default function LoginPage() {
         try {
             console.log('로그인 시도:', formData.email);
 
-            const response = await authApi.login(formData);
-            console.log('로그인 성공 응답:', response);
+            const result = await authApi.login(formData);
+            console.log('로그인 결과:', result);
 
-            // 백엔드 응답 구조에 맞춰 처리
-            if (response.data) {
-                console.log('로그인 성공, 사용자 데이터:', response.data);
+            if (result.success && result.data) {
+                console.log('로그인 성공, 사용자 데이터:', result.data);
 
                 // useAuth의 loginSuccess 호출
                 await loginSuccess(
                     {
-                        userId: response.data.userId,
-                        email: response.data.email,
-                        nickname: response.data.nickname
+                        userId: result.data.userId,
+                        email: result.data.email,
+                        nickname: result.data.nickname
                     },
-                    response.data.accessToken,
-                    response.data.refreshToken
+                    result.data.accessToken,
+                    result.data.refreshToken
                 );
                 console.log('로그인 성공 - 홈페이지로 이동');
             } else {
-                console.error('응답에 data가 없습니다:', response);
-                showError('로그인 응답이 올바르지 않습니다.');
+                // API 호출은 성공했지만 로그인 실패 (잘못된 자격증명 등)
+                showError(result.error || '이메일 또는 비밀번호가 올바르지 않습니다.');
             }
-        } catch (err: any) {
-            console.error('로그인 에러 전체:', err);
-            console.error('에러 응답:', err.response);
-            console.error('에러 응답 데이터:', err.response?.data);
-            console.error('에러 상태 코드:', err.response?.status);
-            console.error('에러 메시지:', err.message);
-
-            // 에러 메시지 결정
-            let errorMessage = '로그인에 실패했습니다.';
-
-            if (err.response) {
-                // 서버 응답이 있는 경우
-                const status = err.response.status;
-                const responseData = err.response.data;
-
-                console.log('서버 응답 상태:', status);
-                console.log('서버 응답 데이터:', responseData);
-
-                if (status === 401 || status === 400) {
-                    // 인증 실패
-                    if (responseData?.message) {
-                        errorMessage = responseData.message;
-                    } else {
-                        errorMessage = '이메일 또는 비밀번호가 올바르지 않습니다.';
-                    }
-                } else if (status === 500) {
-                    errorMessage = '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
-                } else {
-                    errorMessage = responseData?.message || `서버 오류 (${status})`;
-                }
-            } else if (err.request) {
-                // 요청은 보냈지만 응답을 받지 못한 경우
-                console.error('네트워크 오류:', err.request);
-                errorMessage = '네트워크 오류가 발생했습니다. 인터넷 연결을 확인해주세요.';
-            } else {
-                // 요청 설정 중 오류가 발생한 경우
-                console.error('요청 설정 오류:', err.message);
-                errorMessage = err.message || '알 수 없는 오류가 발생했습니다.';
-            }
-
-            showError(errorMessage);
+        } catch (error: any) {
+            // 네트워크 에러 등 예상치 못한 에러
+            console.error('로그인 처리 중 예외 발생:', error);
+            showError('네트워크 오류가 발생했습니다. 인터넷 연결을 확인해주세요.');
         } finally {
             setIsLoading(false);
         }
