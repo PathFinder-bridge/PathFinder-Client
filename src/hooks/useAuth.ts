@@ -21,8 +21,6 @@ export const useAuth = () => {
 
     // 프로필 상태 확인
     const checkProfileStatus = useCallback(async () => {
-        if (!isLoggedIn) return;
-
         const result = await userApi.getProfileStatus();
         if (result.success && result.data) {
             setProfileStatus(result.data);
@@ -31,21 +29,34 @@ export const useAuth = () => {
             console.error('프로필 상태 확인 실패:', result.error);
             return null;
         }
-    }, [isLoggedIn]);
+    }, []);
 
     // 사용자 프로필 정보 로드
     const loadUserProfile = useCallback(async () => {
-        if (!isLoggedIn) return;
+        console.log('loadUserProfile 시작 - isLoggedIn:', isLoggedIn);
 
         const result = await userApi.getUserProfile();
+        console.log('getUserProfile 결과:', result);
+
         if (result.success && result.data) {
+            console.log('프로필 로드 성공:', result.data);
             setUserProfile(result.data);
+
+            // userProfile에서 실제 사용자 정보를 추출해서 user state 업데이트
+            const updatedUser = {
+                userId: result.data.id,
+                email: result.data.email,
+                nickname: result.data.nickname
+            };
+            console.log('사용자 정보 업데이트:', updatedUser);
+            setUser(updatedUser);
+
             return result.data;
         } else {
-            console.error('프로필 정보 로드 실패:', result.error);
+            console.error('프로필 정보 로드 실패:', result.error, 'status:', result.status);
             return null;
         }
-    }, [isLoggedIn]);
+    }, []);
 
     // 초기 인증 상태 확인
     useEffect(() => {
@@ -54,37 +65,73 @@ export const useAuth = () => {
 
             if (accessToken) {
                 try {
-                    // JWT 토큰에서 사용자 정보 추출
+                    // JWT 토큰에서 만료 시간 체크
                     const payload = JSON.parse(atob(accessToken.split('.')[1]));
-                    const userData = {
-                        userId: payload.userId || payload.sub,
-                        email: payload.email || payload.sub,
-                        nickname: payload.nickname || 'User'
-                    };
+                    const currentTime = Math.floor(Date.now() / 1000);
 
-                    console.log('토큰에서 추출한 사용자 정보:', userData);
-                    setUser(userData);
+                    // 토큰이 만료되었으면 미리 삭제
+                    if (payload.exp && payload.exp < currentTime) {
+                        console.log('토큰이 만료됨 - 삭제 처리');
+                        tokenManager.clearTokens();
+                        setIsLoggedIn(false);
+                        setUser(null);
+                        setUserProfile(null);
+                        setProfileStatus(null);
+                        setIsLoading(false);
+                        return;
+                    }
+
+                    // 토큰이 유효하면 로그인 상태 설정하고 프로필 로드
                     setIsLoggedIn(true);
+                    console.log('토큰 유효 - 프로필 로드 시작');
 
-                    // 로그인 상태면 프로필 정보도 함께 로드
-                    await Promise.all([
-                        checkProfileStatus(),
-                        loadUserProfile()
-                    ]);
+                    try {
+                        // 프로필 정보 로드 시도
+                        const profileResult = await loadUserProfile();
+                        await checkProfileStatus();
+
+                        // 프로필 로드가 실패한 경우에만 JWT 정보 사용
+                        if (!profileResult) {
+                            console.log('프로필 로드 실패 - JWT 정보로 대체');
+                            const fallbackUserData = {
+                                userId: payload.userId || payload.sub,
+                                email: payload.email || payload.sub,
+                                nickname: payload.nickname || 'User'
+                            };
+                            setUser(fallbackUserData);
+                        } else {
+                            console.log('프로필 로드 성공 - DB 정보 사용');
+                        }
+                    } catch (error) {
+                        console.error('프로필 로드 중 예외 발생:', error);
+                        const fallbackUserData = {
+                            userId: payload.userId || payload.sub,
+                            email: payload.email || payload.sub,
+                            nickname: payload.nickname || 'User'
+                        };
+                        setUser(fallbackUserData);
+                    }
+
                 } catch (error) {
-                    console.error('토큰 파싱 오류:', error);
+                    console.error('토큰 파싱 또는 프로필 로드 오류:', error);
                     tokenManager.clearTokens();
                     setIsLoggedIn(false);
+                    setUser(null);
+                    setUserProfile(null);
+                    setProfileStatus(null);
                 }
             } else {
                 setIsLoggedIn(false);
+                setUser(null);
+                setUserProfile(null);
+                setProfileStatus(null);
             }
 
             setIsLoading(false);
         };
 
         checkAuth();
-    }, [checkProfileStatus, loadUserProfile]);
+    }, []);
 
     // 로그아웃
     const logout = async () => {
@@ -108,15 +155,14 @@ export const useAuth = () => {
         console.log('로그인 성공 처리 시작:', userData);
 
         tokenManager.setTokens(accessToken, refreshToken);
-        setUser(userData);
         setIsLoggedIn(true);
 
-        // 로그인 후 프로필 정보 로드
         try {
             await Promise.all([
-                checkProfileStatus(),
-                loadUserProfile()
+                loadUserProfile(), // 실제 DB의 사용자 정보로 user state 업데이트
+                checkProfileStatus()
             ]);
+            console.log('로그인 후 프로필 로드 완료');
         } catch (error) {
             console.error('로그인 후 프로필 정보 로드 실패:', error);
         }
@@ -128,8 +174,8 @@ export const useAuth = () => {
     // 프로필 업데이트 후 상태 갱신
     const refreshProfileData = async () => {
         await Promise.all([
-            checkProfileStatus(),
-            loadUserProfile()
+            loadUserProfile(),
+            checkProfileStatus()
         ]);
     };
 
