@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { Layout } from '@/layout/Layout';
 import { ProtectedRoute } from '@/components/common/ProtectedRoute';
+import CharacterCard from '@/components/common/CharacterCard';
 import { jobAnimals } from '@/lib/data';
 import { Job } from '@/lib/types';
 
@@ -76,44 +77,15 @@ function JobGrid({ jobs, selectedJob, onCardClick }: JobGridProps) {
     return (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6 mb-8">
             {jobs.map((job) => (
-                <JobAnimalCard
+                <CharacterCard
                     key={job.jobTitle}
-                    job={job}
-                    isSelected={selectedJob?.jobTitle === job.jobTitle}
+                    emoji={job.emoji}
+                    title={job.jobTitle}
+                    subtitle={job.animalName}
+                    selected={selectedJob?.jobTitle === job.jobTitle}
                     onClick={() => onCardClick(job)}
                 />
             ))}
-        </div>
-    );
-}
-
-interface JobAnimalCardProps {
-    job: Job;
-    isSelected: boolean;
-    onClick: () => void;
-}
-
-function JobAnimalCard({ job, isSelected, onClick }: JobAnimalCardProps) {
-    return (
-        <div
-            onClick={onClick}
-            className={`group flex flex-col items-center justify-center p-6 bg-white/80 backdrop-blur-sm border-2 rounded-xl text-center cursor-pointer transform transition-all duration-300 hover:shadow-lg hover:scale-110 hover:-translate-y-1 ${
-                isSelected
-                    ? 'border-purple-400 bg-gradient-to-br from-purple-50 to-pink-50 shadow-lg scale-110 -translate-y-1 ring-4 ring-purple-200'
-                    : 'border-gray-200 hover:border-purple-300 shadow-md'
-            }`}
-            style={{ minHeight: '180px' }}
-        >
-            <div className={`text-5xl mb-3 transition-all duration-300 group-hover:scale-125 ${isSelected ? 'animate-bounce' : ''}`}>
-                {job.emoji}
-            </div>
-            <div className={`w-2 h-2 rounded-full mb-2 transition-colors duration-300 ${
-                isSelected ? 'bg-purple-500 animate-pulse' : 'bg-gray-300'
-            }`}></div>
-            <p className="text-sm font-medium text-gray-500 mb-1">{job.animalName}</p>
-            <h3 className={`text-base font-semibold transition-colors duration-300 ${
-                isSelected ? 'text-purple-700' : 'text-gray-800'
-            }`}>{job.jobTitle}</h3>
         </div>
     );
 }

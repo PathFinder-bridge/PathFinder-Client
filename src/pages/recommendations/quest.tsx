@@ -4,6 +4,7 @@ import React, { useState, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import { Layout } from '@/layout/Layout';
 import { ProtectedRoute } from '@/components/common/ProtectedRoute';
+import CharacterCard from '@/components/common/CharacterCard';
 import { useRouter } from 'next/navigation';
 import { EXPERIENCED_JOBS } from '@/lib/data';
 
@@ -75,23 +76,20 @@ const JobSelectionScreen = ({ onSubmit }: { onSubmit: (jobTitle: string) => void
     };
 
     return (
-        <div className="flex flex-col items-center justify-center text-center py-10 bg-white rounded-lg shadow-xl">
+        <div className="flex flex-col items-center justify-center text-center py-12 bg-white rounded-lg shadow-xl">
             <div className="w-full max-w-4xl mx-auto px-4">
-                <h1 className="text-3xl font-bold text-gray-800 mb-6">체험했던 캐릭터 중 가장 재밌었던 직무를 선택해주세요</h1>
+                <h1 className="text-2xl font-bold text-gray-800 mb-12">체험했던 캐릭터 중 가장 재밌었던 직무를 선택해주세요!</h1>
 
                 <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4 mb-10">
                     {EXPERIENCED_JOBS.map((job) => (
-                        <div
+                        <CharacterCard
                             key={job.id}
+                            emoji={job.icon}
+                            title={job.title}          // 직무명
+                            subtitle={job.name}        // 캐릭터명
+                            selected={selectedJobId === job.id}
                             onClick={() => setSelectedJobId(job.id)}
-                            className={`flex flex-col items-center justify-center p-4 rounded-xl cursor-pointer transition-all duration-300 transform hover:scale-105 ${
-                                selectedJobId === job.id ? 'bg-blue-500 shadow-lg ring-4 ring-blue-300' : 'bg-purple-400 hover:bg-purple-500 shadow-md'
-                            }`}
-                        >
-                            <div className="text-5xl mb-2">{job.icon}</div>
-                            <div className={`font-bold text-sm ${selectedJobId === job.id ? 'text-white' : 'text-purple-100'}`}>{job.name}</div>
-                            <div className={`text-xs ${selectedJobId === job.id ? 'text-blue-100' : 'text-purple-200'}`}>{job.title}</div>
-                        </div>
+                        />
                     ))}
                 </div>
 
