@@ -1,4 +1,5 @@
 import apiClient, {tokenManager} from './client';
+import { BackendResponse, ApiResult } from './common';
 
 // 타입 정의
 export interface LoginRequest {
@@ -54,186 +55,236 @@ export interface SignUpResponse {
     createdAt: string;
 }
 
-// 백엔드 응답 구조에 맞춘 타입 정의
-export interface BackendResponse<T> {
-    timeStamp: string;
-    message?: string;
-    data: T;
-}
-
 // API 함수들
 export const authApi = {
     // 이메일 중복 확인
-    checkEmailDuplicate: async (email: string): Promise<BackendResponse<boolean>> => {
-        try {
-            const response = await apiClient.get<BackendResponse<boolean>>(`/api/auth/check-email?email=${encodeURIComponent(email)}`);
-            return response.data;
-        } catch (error: any) {
-            console.error('이메일 중복 확인 오류:', error);
-            if (error.response?.data?.message) {
-                throw new Error(error.response.data.message);
-            } else {
-                throw new Error('이메일 중복 확인에 실패했습니다.');
-            }
+    checkEmailDuplicate: async (email: string): Promise<ApiResult<boolean>> => {
+        const response = await apiClient.get<BackendResponse<boolean>>(`/api/auth/check-email?email=${encodeURIComponent(email)}`);
+
+        if (response.data.success) {
+            return {
+                success: true,
+                data: response.data.data
+            };
+        } else {
+            return {
+                success: false,
+                error: response.data.message,
+                errorCode: response.data.errorCode
+            };
         }
     },
 
     // 이메일 인증 코드 발송
-    verifyEmail: async (data: VerifyEmailRequest): Promise<BackendResponse<VerifyEmailResponse>> => {
-        try {
-            const response = await apiClient.post<BackendResponse<VerifyEmailResponse>>('/api/auth/verify-email', data);
-            return response.data;
-        } catch (error: any) {
-            console.error('이메일 인증 코드 발송 오류:', error);
-            if (error.response?.data?.message) {
-                throw new Error(error.response.data.message);
-            } else {
-                throw new Error('인증 코드 발송에 실패했습니다.');
-            }
+    verifyEmail: async (data: VerifyEmailRequest): Promise<ApiResult<VerifyEmailResponse>> => {
+        const response = await apiClient.post<BackendResponse<VerifyEmailResponse>>('/api/auth/verify-email', data);
+
+        if (response.data.success) {
+            return {
+                success: true,
+                data: response.data.data
+            };
+        } else {
+            return {
+                success: false,
+                error: response.data.message,
+                errorCode: response.data.errorCode
+            };
         }
     },
 
     // 인증 코드 검증
-    verifyCode: async (data: VerifyCodeRequest): Promise<BackendResponse<VerifyCodeResponse>> => {
-        try {
-            const response = await apiClient.post<BackendResponse<VerifyCodeResponse>>('/api/auth/verify-code', data);
-            return response.data;
-        } catch (error: any) {
-            console.error('인증 코드 검증 오류:', error);
-            if (error.response?.data?.message) {
-                throw new Error(error.response.data.message);
-            } else {
-                throw new Error('인증번호 확인에 실패했습니다.');
-            }
+    verifyCode: async (data: VerifyCodeRequest): Promise<ApiResult<VerifyCodeResponse>> => {
+        const response = await apiClient.post<BackendResponse<VerifyCodeResponse>>('/api/auth/verify-code', data);
+
+        if (response.data.success) {
+            return {
+                success: true,
+                data: response.data.data
+            };
+        } else {
+            return {
+                success: false,
+                error: response.data.message,
+                errorCode: response.data.errorCode
+            };
         }
     },
 
     // 회원가입
-    signUp: async (data: SignUpRequest): Promise<BackendResponse<SignUpResponse>> => {
+    signUp: async (data: SignUpRequest): Promise<ApiResult<SignUpResponse>> => {
         try {
             const response = await apiClient.post<BackendResponse<SignUpResponse>>('/api/auth/signup', data);
-            return response.data;
+
+            if (response.data.success) {
+                return {
+                    success: true,
+                    data: response.data.data
+                };
+            } else {
+                return {
+                    success: false,
+                    error: response.data.message || '회원가입에 실패했습니다.',
+                    errorCode: response.data.errorCode
+                };
+            }
         } catch (error: any) {
             console.error('회원가입 오류:', error);
-            if (error.response?.data?.message) {
-                throw new Error(error.response.data.message);
-            } else {
-                throw new Error('회원가입에 실패했습니다.');
+
+            // 백엔드 응답 구조에 맞춘 에러 처리
+            if (error.response?.data?.success === false) {
+                return {
+                    success: false,
+                    error: error.response.data.message || '회원가입에 실패했습니다.',
+                    errorCode: error.response.data.errorCode,
+                    status: error.response?.status
+                };
             }
+
+            return {
+                success: false,
+                error: error.response?.data?.message || '회원가입에 실패했습니다.',
+                status: error.response?.status
+            };
         }
     },
 
     // 로그인
-    login: async (data: LoginRequest): Promise<BackendResponse<LoginResponse>> => {
-        try {
-            console.log('로그인 요청 데이터:', data);
-            const response = await apiClient.post<BackendResponse<LoginResponse>>('/api/auth/login', data);
-            console.log('로그인 원본 응답:', response.data);
+    login: async (data: LoginRequest): Promise<ApiResult<LoginResponse>> => {
+        const response = await apiClient.post<BackendResponse<LoginResponse>>('/api/auth/login', data);
 
-            const result = response.data;
-
-            // 토큰 자동 저장
-            if (result.data && result.data.accessToken && result.data.refreshToken) {
-                console.log('토큰 저장:', result.data.accessToken, result.data.refreshToken);
-                tokenManager.setTokens(result.data.accessToken, result.data.refreshToken);
+        if (response.data.success) {
+            // 성공 시 토큰 자동 저장
+            if (response.data.data && response.data.data.accessToken && response.data.data.refreshToken) {
+                tokenManager.setTokens(response.data.data.accessToken, response.data.data.refreshToken);
             }
 
-            return result;
-        } catch (error: any) {
-            console.error('로그인 API 에러:', error);
-            console.error('에러 상세:', {
-                status: error.response?.status,
-                data: error.response?.data,
-                message: error.message
-            });
-
-            // 에러를 그대로 throw해서 컴포넌트에서 처리하도록 함
-            throw error;
+            return {
+                success: true,
+                data: response.data.data
+            };
+        } else {
+            return {
+                success: false,
+                error: response.data.message,
+                errorCode: response.data.errorCode
+            };
         }
     },
 
     // 카카오 로그인
-    kakaoLogin: async (data: KakaoLoginRequest): Promise<BackendResponse<LoginResponse>> => {
+    kakaoLogin: async (data: KakaoLoginRequest): Promise<ApiResult<LoginResponse>> => {
         try {
             const response = await apiClient.post<BackendResponse<LoginResponse>>('/api/auth/kakao/login', data);
-            const result = response.data;
 
-            // 토큰 자동 저장
-            if (result.data && result.data.accessToken && result.data.refreshToken) {
-                tokenManager.setTokens(result.data.accessToken, result.data.refreshToken);
+            if (response.data.success) {
+                // 토큰 자동 저장
+                if (response.data.data && response.data.data.accessToken && response.data.data.refreshToken) {
+                    tokenManager.setTokens(response.data.data.accessToken, response.data.data.refreshToken);
+                }
+
+                return {
+                    success: true,
+                    data: response.data.data
+                };
+            } else {
+                return {
+                    success: false,
+                    error: response.data.message || '카카오 로그인에 실패했습니다.',
+                    errorCode: response.data.errorCode
+                };
             }
-
-            return result;
         } catch (error: any) {
             console.error('카카오 로그인 오류:', error);
-            if (error.response?.data?.message) {
-                throw new Error(error.response.data.message);
-            } else {
-                throw new Error('카카오 로그인에 실패했습니다.');
+
+            // 백엔드 응답 구조에 맞춘 에러 처리
+            if (error.response?.data?.success === false) {
+                return {
+                    success: false,
+                    error: error.response.data.message || '카카오 로그인에 실패했습니다.',
+                    errorCode: error.response.data.errorCode,
+                    status: error.response?.status
+                };
             }
+
+            return {
+                success: false,
+                error: error.response?.data?.message || '카카오 로그인에 실패했습니다.',
+                status: error.response?.status
+            };
         }
     },
 
     // 로그아웃
-    logout: async (): Promise<BackendResponse<void>> => {
+    logout: async (): Promise<ApiResult<void>> => {
         try {
             const response = await apiClient.post<BackendResponse<void>>('/api/users/logout');
             tokenManager.clearTokens();
-            return response.data;
+
+            if (response.data.success) {
+                return {
+                    success: true
+                };
+            } else {
+                return {
+                    success: false,
+                    error: response.data.message || '로그아웃 요청에 실패했습니다.',
+                    errorCode: response.data.errorCode
+                };
+            }
         } catch (error: any) {
             console.error('로그아웃 오류:', error);
             // 로그아웃은 실패해도 토큰 삭제
             tokenManager.clearTokens();
-            if (error.response?.data?.message) {
-                throw new Error(error.response.data.message);
-            } else {
-                throw new Error('로그아웃 요청에 실패했습니다.');
+
+            // 백엔드 응답 구조에 맞춘 에러 처리
+            if (error.response?.data?.success === false) {
+                return {
+                    success: false,
+                    error: error.response.data.message || '로그아웃 요청에 실패했습니다.',
+                    errorCode: error.response.data.errorCode,
+                    status: error.response?.status
+                };
             }
+
+            return {
+                success: false,
+                error: error.response?.data?.message || '로그아웃 요청에 실패했습니다.',
+                status: error.response?.status
+            };
         }
     },
 
-    // 현재 사용자 정보 조회
-    getCurrentUser: async (): Promise<BackendResponse<LoginResponse>> => {
-        try {
-            const response = await apiClient.get<BackendResponse<LoginResponse>>('/api/auth/me');
-            return response.data;
-        } catch (error: any) {
-            console.error('사용자 정보 조회 오류:', error);
-            if (error.response?.data?.message) {
-                throw new Error(error.response.data.message);
-            } else {
-                throw new Error('사용자 정보를 가져올 수 없습니다.');
-            }
+    // 토큰 갱신
+    refreshToken: async (): Promise<ApiResult<{ accessToken: string; refreshToken: string; accessTokenExpiresIn: number; refreshTokenExpiresIn: number }>> => {
+        const currentRefreshToken = tokenManager.getRefreshToken();
+        if (!currentRefreshToken) {
+            return {
+                success: false,
+                error: 'Refresh token이 없습니다.'
+            };
         }
-    },
 
-    // 토큰 갱신 (백엔드에 refresh 엔드포인트가 있을 때 사용)
-    refreshToken: async (): Promise<BackendResponse<{ accessToken: string; refreshToken: string }>> => {
-        try {
-            const refreshToken = tokenManager.getRefreshToken();
-            if (!refreshToken) {
-                throw new Error('Refresh token이 없습니다.');
-            }
+        const response = await apiClient.post<BackendResponse<{
+            accessToken: string;
+            refreshToken: string;
+            accessTokenExpiresIn: number;
+            refreshTokenExpiresIn: number;
+        }>>('/api/auth/refresh', { refreshToken: currentRefreshToken });
 
-            const response = await apiClient.post<BackendResponse<{
-                accessToken: string;
-                refreshToken: string
-            }>>('/api/auth/refresh', {refreshToken});
-            const result = response.data;
-
-            if (result.data) {
-                tokenManager.setTokens(result.data.accessToken, result.data.refreshToken);
-            }
-
-            return result;
-        } catch (error: any) {
-            console.error('토큰 갱신 오류:', error);
+        if (response.data.success && response.data.data) {
+            tokenManager.setTokens(response.data.data.accessToken, response.data.data.refreshToken);
+            return {
+                success: true,
+                data: response.data.data
+            };
+        } else {
             tokenManager.clearTokens();
-            if (error.response?.data?.message) {
-                throw new Error(error.response.data.message);
-            } else {
-                throw new Error('토큰 갱신에 실패했습니다.');
-            }
+            return {
+                success: false,
+                error: response.data.message || '토큰 갱신에 실패했습니다.',
+                errorCode: response.data.errorCode
+            };
         }
     },
 };

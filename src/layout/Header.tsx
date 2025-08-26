@@ -3,11 +3,13 @@
 import React, {useState} from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import {useRouter} from 'next/navigation';
 import {useAuth} from '@/hooks/useAuth';
 
 export const Header: React.FC = () => {
-    const {isLoggedIn, user, logout} = useAuth();
+    const {isLoggedIn, user, logout, isLoading} = useAuth();
     const [showUserMenu, setShowUserMenu] = useState(false);
+    const router = useRouter();
 
     const handleLogout = async () => {
         await logout();
@@ -30,33 +32,36 @@ export const Header: React.FC = () => {
                         />
                     </Link>
 
-                    {/* 네비게이션 메뉴 */}
-                    <nav className="hidden md:flex space-x-8">
-                        <Link
-                            href="/recommendations"
+                    {/* 네비게이션 메뉴 - 항상 표시 */}
+                    <nav className="flex space-x-8">
+                        <button
+                            onClick={() => router.push('/recommendations')}
                             className="text-gray-600 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors"
                         >
                             직무 추천
-                        </Link>
+                        </button>
                         <Link
                             href="/jobs"
                             className="text-gray-600 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors"
                         >
                             직무 리스트
                         </Link>
-                        <Link
-                            href="/roadmaps"
+                        <button
+                            onClick={() => router.push('/roadmaps')}
                             className="text-gray-600 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors"
                         >
                             직무 로드맵
-                        </Link>
+                        </button>
                     </nav>
 
                     {/* 사용자 영역 */}
                     <div className="flex items-center space-x-4">
-                        {isLoggedIn && user ? (
+                        {/* 로딩 중일 때 */}
+                        {isLoading ? (
+                            <div className="text-sm text-gray-500">로딩 중...</div>
+                        ) : isLoggedIn && user ? (
+                            /* 로그인된 상태 */
                             <div className="relative">
-                                {/* 사용자 메뉴 버튼 */}
                                 <button
                                     onClick={() => setShowUserMenu(!showUserMenu)}
                                     className="flex items-center space-x-2 text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
@@ -77,13 +82,10 @@ export const Header: React.FC = () => {
                                 {/* 드롭다운 메뉴 */}
                                 {showUserMenu && (
                                     <>
-                                        {/* 백드롭 */}
                                         <div
                                             className="fixed inset-0 z-10"
                                             onClick={() => setShowUserMenu(false)}
                                         />
-
-                                        {/* 메뉴 */}
                                         <div
                                             className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20 border border-gray-200">
                                             <Link
@@ -104,6 +106,7 @@ export const Header: React.FC = () => {
                                 )}
                             </div>
                         ) : (
+                            /* 로그인되지 않은 상태 */
                             <div className="flex items-center space-x-3">
                                 <Link
                                     href="/login"

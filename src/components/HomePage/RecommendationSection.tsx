@@ -30,10 +30,6 @@ const RECOMMENDATION_TYPES = [
 export const RecommendationSection: React.FC = () => {
     const router = useRouter();
 
-    const handleStartRecommendation = () => {
-        router.push('/signup');
-    };
-
     return (
         <section className="py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 relative overflow-hidden">
             {/* Background decorations */}
@@ -105,7 +101,7 @@ export const RecommendationSection: React.FC = () => {
 
                         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                             <button
-                                onClick={handleStartRecommendation}
+                                onClick={() => router.push('/recommendations')}
                                 className="group inline-flex items-center px-8 py-4 bg-slate-700 hover:bg-slate-800 text-white text-lg font-semibold rounded-full transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105"
                             >
                                 직무 추천 시작하기

@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
-import { Layout } from '@/layout/Layout';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { skillsData } from '@/lib/data';
-import { Skill } from '@/lib/types';
+import React, {useState, useMemo} from 'react';
+import {Layout} from '@/layout/Layout';
+import {useRouter, useSearchParams} from 'next/navigation';
+import {skillsData} from '@/lib/data';
+import {Skill} from '@/lib/types';
+import AuthGuard from '@/components/common/AuthGuard';
 
 export default function SkillSelectionPage() {
     const router = useRouter();
@@ -54,53 +55,57 @@ export default function SkillSelectionPage() {
     };
 
     return (
-        <Layout>
-            <div className="bg-white min-h-screen">
-                <div className="w-full max-w-6xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
-                    <header className="mb-10">
-                        <h1 className="text-3xl font-bold text-gray-800">경험해봤거나 관심이 있는 스킬을 선택해주세요</h1>
-                        <p className="mt-2 text-gray-600">선택한 스킬: {selectedSkills.length}개</p>
-                    </header>
+        <AuthGuard>
+            <Layout>
+                <div className="bg-white min-h-screen">
+                    <div className="w-full max-w-6xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
+                        <header className="mb-10">
+                            <h1 className="text-3xl font-bold text-gray-800">경험해봤거나 관심이 있는 스킬을 선택해주세요</h1>
+                            <p className="mt-2 text-gray-600">선택한 스킬: {selectedSkills.length}개</p>
+                        </header>
 
-                    <main className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                        {/* 왼쪽: 스킬 선택 패널 */}
-                        <div className="bg-gray-50 border border-gray-200 rounded-2xl p-8">
-                            <div className="flex items-center gap-3 mb-6">
-                                <div className="w-10 h-10 flex items-center justify-center bg-blue-100 rounded-full text-xl">🤖</div>
-                                <span className="text-lg font-semibold text-blue-800">패파봇</span>
+                        <main className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                            {/* 왼쪽: 스킬 선택 패널 */}
+                            <div className="bg-gray-50 border border-gray-200 rounded-2xl p-8">
+                                <div className="flex items-center gap-3 mb-6">
+                                    <div
+                                        className="w-10 h-10 flex items-center justify-center bg-blue-100 rounded-full text-xl">🤖
+                                    </div>
+                                    <span className="text-lg font-semibold text-blue-800">패파봇</span>
+                                </div>
+
+                                {categorizedSkills.map(category => (
+                                    <SkillCategory
+                                        key={category.name}
+                                        name={category.name}
+                                        skills={category.skills}
+                                        selectedSkills={selectedSkills}
+                                        onSkillToggle={handleSkillToggle}
+                                    />
+                                ))}
+
+                                <div className="text-center mt-8">
+                                    <button
+                                        onClick={handleSubmit}
+                                        className="bg-blue-500 text-white font-bold py-3 px-10 rounded-lg hover:bg-blue-600 transition-colors duration-200"
+                                    >
+                                        확인 ({selectedSkills.length}개 선택됨)
+                                    </button>
+                                </div>
                             </div>
 
-                            {categorizedSkills.map(category => (
-                                <SkillCategory
-                                    key={category.name}
-                                    name={category.name}
-                                    skills={category.skills}
-                                    selectedSkills={selectedSkills}
-                                    onSkillToggle={handleSkillToggle}
-                                />
-                            ))}
+                            {/* 오른쪽: 스킬 설명 패널 */}
+                            <SkillDescriptionPanel activeSkill={activeSkill}/>
+                        </main>
+                    </div>
 
-                            <div className="text-center mt-8">
-                                <button
-                                    onClick={handleSubmit}
-                                    className="bg-blue-500 text-white font-bold py-3 px-10 rounded-lg hover:bg-blue-600 transition-colors duration-200"
-                                >
-                                    확인 ({selectedSkills.length}개 선택됨)
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* 오른쪽: 스킬 설명 패널 */}
-                        <SkillDescriptionPanel activeSkill={activeSkill} />
-                    </main>
+                    {/* 하단 진행률 표시 바 */}
+                    <footer className="w-full mt-10">
+                        <div className="bg-blue-600 h-2.5 w-full"/>
+                    </footer>
                 </div>
-
-                {/* 하단 진행률 표시 바 */}
-                <footer className="w-full mt-10">
-                    <div className="bg-blue-600 h-2.5 w-full"/>
-                </footer>
-            </div>
-        </Layout>
+            </Layout>
+        </AuthGuard>
     );
 }
 
@@ -111,7 +116,7 @@ interface SkillCategoryProps {
     onSkillToggle: (skill: Skill) => void;
 }
 
-function SkillCategory({ name, skills, selectedSkills, onSkillToggle }: SkillCategoryProps) {
+function SkillCategory({name, skills, selectedSkills, onSkillToggle}: SkillCategoryProps) {
     return (
         <div className="mb-6">
             <h3 className="text-sm font-semibold text-gray-700 mb-3">{name}</h3>
@@ -138,7 +143,7 @@ interface SkillDescriptionPanelProps {
     activeSkill: Skill | null;
 }
 
-function SkillDescriptionPanel({ activeSkill }: SkillDescriptionPanelProps) {
+function SkillDescriptionPanel({activeSkill}: SkillDescriptionPanelProps) {
     return (
         <div className="bg-gray-50 border border-gray-200 rounded-2xl p-8">
             {activeSkill ? (

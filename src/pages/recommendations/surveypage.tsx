@@ -5,6 +5,7 @@ import { Layout } from '@/layout/Layout';
 import { useRouter } from 'next/navigation';
 import { surveyQuestions } from '@/lib/data';
 import { SurveyAnswers } from '@/lib/types';
+import AuthGuard from '@/components/common/AuthGuard';
 
 const answerOptions = [
     { value: -2, color: 'red-500', hoverColor: 'red-400', label: '매우 동의하지 않음' },
@@ -47,32 +48,34 @@ export default function SurveyPage() {
     };
 
     return (
-        <Layout>
-            <div className="flex flex-col justify-between min-h-screen bg-white">
-                <div className="w-full max-w-4xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
-                    <SurveyHeader
-                        currentIndex={currentQuestionIndex}
-                        totalQuestions={surveyQuestions.length}
-                    />
-
-                    <main>
-                        <QuestionCard
-                            question={currentQuestion}
-                            selectedAnswer={answers[currentQuestion.id]}
-                            onAnswerSelect={handleAnswerSelect}
+        <AuthGuard>
+            <Layout>
+                <div className="flex flex-col justify-between min-h-screen bg-white">
+                    <div className="w-full max-w-4xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
+                        <SurveyHeader
+                            currentIndex={currentQuestionIndex}
+                            totalQuestions={surveyQuestions.length}
                         />
 
-                        <NavigationButtons
-                            onPrevious={handlePrevious}
-                            canGoPrevious={currentQuestionIndex > 0}
-                            isLastQuestion={isLastQuestion}
-                        />
-                    </main>
+                        <main>
+                            <QuestionCard
+                                question={currentQuestion}
+                                selectedAnswer={answers[currentQuestion.id]}
+                                onAnswerSelect={handleAnswerSelect}
+                            />
+
+                            <NavigationButtons
+                                onPrevious={handlePrevious}
+                                canGoPrevious={currentQuestionIndex > 0}
+                                isLastQuestion={isLastQuestion}
+                            />
+                        </main>
+                    </div>
+
+                    <ProgressBar percentage={progressPercentage} />
                 </div>
-
-                <ProgressBar percentage={progressPercentage} />
-            </div>
-        </Layout>
+            </Layout>
+        </AuthGuard>
     );
 }
 
