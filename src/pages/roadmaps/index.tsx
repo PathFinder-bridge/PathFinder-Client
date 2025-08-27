@@ -3,6 +3,7 @@
 import React, {useState, useEffect, useRef, useCallback} from 'react';
 import {useSearchParams} from 'next/navigation';
 import {Layout} from '@/layout/Layout';
+import {useAuth} from "@/hooks/useAuth";
 import AuthGuard from '@/components/common/AuthGuard';
 
 // 타입 정의
@@ -46,6 +47,13 @@ const fetchGptResponse = async (prompt: string): Promise<string> => {
 
 export default function JobRoadmapPage() {
     const searchParams = useSearchParams();
+    const {user, userProfile} = useAuth();
+    const displayName =
+        (user as any)?.nickname ||
+        (userProfile as any)?.nickname ||
+        (user as any)?.name ||
+        ((user as any)?.email ? (user as any).email.split('@')[0] : '') ||
+        '사용자';
     const [recommendedJobs, setRecommendedJobs] = useState<Job[]>([]);
     const [selectedJob, setSelectedJob] = useState<Job | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
@@ -53,13 +61,16 @@ export default function JobRoadmapPage() {
     const chatEndRef = useRef<HTMLDivElement>(null);
 
     // 메시지 리스트에 새 메시지 추가
-    const addMessage = useCallback((sender: 'bot' | 'user', text: string, isLoading = false) => {
-        setMessages(prev => [...prev, {id: Date.now(), sender, text, isLoading}]);
-    }, []);
+    const addMessage = useCallback(
+        (sender: 'bot' | 'user', text: string, isLoading = false) => {
+            setMessages((prev) => [...prev, {id: Date.now(), sender, text, isLoading}]);
+        },
+        []
+    );
 
     // 로딩이 끝난 후 마지막 메시지(로딩)를 실제 응답으로 업데이트
     const updateLastMessage = useCallback((text: string) => {
-        setMessages(prev => {
+        setMessages((prev) => {
             const newMessages = [...prev];
             const lastMessage = newMessages[newMessages.length - 1];
             if (lastMessage && lastMessage.isLoading) {
@@ -71,28 +82,36 @@ export default function JobRoadmapPage() {
     }, []);
 
     // 직무 카드 클릭 시 챗봇 플로우 시작
-    const handleJobCardClick = useCallback(async (job: Job) => {
-        if (!job) return;
-        setSelectedJob(job);
-        setMessages([]); // 채팅창 초기화
+    const handleJobCardClick = useCallback(
+        async (job: Job) => {
+            if (!job) return;
+            setSelectedJob(job);
+            setMessages([]); // 채팅창 초기화
 
-        // 1. 선택 직무 안내
-        addMessage('bot', `user님이 선택한 직무는 **${job.title}**입니다.`);
+            // 1. 선택 직무 안내
+            addMessage('bot', `${displayName}님이 선택한 직무는 **${job.title}**입니다.`);
 
-        // 2. 직무 설명 요청 및 로딩 표시
-        addMessage('bot', '', true);
-        const definition = await fetchGptResponse(`직무 "${job.title}"에 대해 2~3문장으로 알기 쉽게 설명해 줘.`);
-        updateLastMessage(definition);
+            // 2. 직무 설명 요청 및 로딩 표시
+            addMessage('bot', '', true);
+            const definition = await fetchGptResponse(
+                `직무 "${job.title}"에 대해 2~3문장으로 알기 쉽게 설명해 줘.`
+            );
+            updateLastMessage(definition);
 
-        // 3. 로드맵 질문
-        addMessage('bot', `**${job.title}**을(를) 준비하는 로드맵을 안내해드릴까요?`);
-        addMessage('bot', `궁금한 직무명을 입력하여 **1년/6개월/3개월** 로드맵을 안내해드릴게요!\n예시: 3개월 AI 엔지니어`);
-    }, [addMessage, updateLastMessage]);
+            // 3. 로드맵 질문
+            addMessage('bot', `${displayName}님, **${job.title}**을(를) 준비하는 로드맵을 안내해드릴까요?`);
+            addMessage(
+                'bot',
+                `궁금한 직무명을 입력하여 **1년/6개월/3개월** 로드맵을 안내해드릴게요!\n예시: 3개월 AI 엔지니어`
+            );
+        },
+        [addMessage, updateLastMessage, displayName]
+    );
 
     // 자동 스크롤
     const scrollToBottom = useCallback(() => {
         setTimeout(() => {
-            chatEndRef.current?.scrollIntoView({behavior: 'smooth'});
+            chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
         }, 100);
     }, []);
 
@@ -108,7 +127,7 @@ export default function JobRoadmapPage() {
                     handleJobCardClick(jobs[0]);
                 }
             } catch (error) {
-                console.error("Failed to parse jobs data from URL", error);
+                console.error('Failed to parse jobs data from URL', error);
             }
         }
     }, [searchParams, handleJobCardClick]);
@@ -121,7 +140,7 @@ export default function JobRoadmapPage() {
                     {/* 왼쪽: 추천 직무 카드 목록 */}
                     <aside className="w-1/4 p-6 bg-gray-50 border-r border-gray-200 overflow-y-overlay [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                         <div className="space-y-4">
-                            {recommendedJobs.map(job => (
+                            {recommendedJobs.map((job) => (
                                 <div
                                     key={job.id}
                                     onClick={() => handleJobCardClick(job)}
@@ -141,19 +160,25 @@ export default function JobRoadmapPage() {
 
                     {/* 중앙: 챗봇 인터페이스 */}
                     <main className="flex-1 flex flex-col px-28 p-6">
-                        <div className="flex-1 overflow-y-scroll space-y-6 pr-4"
-                             style={{scrollbarWidth: 'none', msOverflowStyle: 'none'}}>
-                            {messages.map(msg => (
-                                <div key={msg.id}
-                                     className={`flex items-end gap-3 ${msg.sender === 'user' ? 'justify-end' : ''}`}>
+                        <div
+                            className="flex-1 overflow-y-scroll space-y-6 pr-4"
+                            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                        >
+                            {messages.map((msg) => (
+                                <div
+                                    key={msg.id}
+                                    className={`flex items-end gap-3 ${msg.sender === 'user' ? 'justify-end' : ''}`}
+                                >
                                     {msg.sender === 'bot' && (
                                         <div className="w-8 h-8 flex-shrink-0 bg-blue-100 rounded-full text-lg flex items-center justify-center">
                                             🤖
                                         </div>
                                     )}
-                                    <div className={`max-w-xl p-4 rounded-2xl ${
+                                    <div
+                                        className={`max-w-xl p-4 rounded-2xl ${
                                             msg.sender === 'bot' ? 'bg-gray-100 text-gray-800' : 'bg-blue-600 text-white'
-                                        }`}>
+                                        }`}
+                                    >
                                         {msg.isLoading ? (
                                             <div className="flex items-center gap-2">
                                                 <span className="w-2 h-2 bg-gray-400 rounded-full animate-pulse"></span>
@@ -161,8 +186,9 @@ export default function JobRoadmapPage() {
                                                 <span className="w-2 h-2 bg-gray-400 rounded-full animate-pulse delay-300"></span>
                                             </div>
                                         ) : (
-                                            <p className="whitespace-pre-wrap"
-                                               dangerouslySetInnerHTML={{
+                                            <p
+                                                className="whitespace-pre-wrap"
+                                                dangerouslySetInnerHTML={{
                                                     __html: msg.text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'),
                                                 }}
                                             />
@@ -170,23 +196,28 @@ export default function JobRoadmapPage() {
                                     </div>
                                 </div>
                             ))}
-                            <div ref={chatEndRef}/>
+                            <div ref={chatEndRef} />
                         </div>
 
-                        <form onSubmit={async (e) => {
-                            e.preventDefault();
-                            if (!userInput.trim()) return;
+                        <form
+                            onSubmit={async (e) => {
+                                e.preventDefault();
+                                if (!userInput.trim()) return;
 
-                            const userText = userInput;
-                            addMessage('user', userText);
-                            setUserInput('');
-                            scrollToBottom();
+                                const userText = userInput;
+                                addMessage('user', userText);
+                                setUserInput('');
+                                scrollToBottom();
 
-                            addMessage('bot', '', true);
-                            const roadmap = await fetchGptResponse(`"${userText}" 요청에 대한 직무 학습 로드맵을 단계별로 알려줘. 초보자도 이해하기 쉽게 설명해줘.`);
-                            updateLastMessage(roadmap);
-                            scrollToBottom();
-                        }} className="mt-6">
+                                addMessage('bot', '', true);
+                                const roadmap = await fetchGptResponse(
+                                    `"${userText}" 요청에 대한 직무 학습 로드맵을 단계별로 알려줘. 초보자도 이해하기 쉽게 설명해줘.`
+                                );
+                                updateLastMessage(roadmap);
+                                scrollToBottom();
+                            }}
+                            className="mt-6"
+                        >
                             <div className="relative">
                                 <input
                                     type="text"
